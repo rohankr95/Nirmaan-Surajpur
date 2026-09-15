@@ -29,6 +29,7 @@ class DashboardController extends Controller
         $status_total_works = $totalCountBuilder->count();
 
 
+        $temp_data = [];
         foreach (get_work_statuses() as $status)
         {
             $tempBuilder = clone $workBuilder;

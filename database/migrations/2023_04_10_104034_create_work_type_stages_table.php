@@ -18,7 +18,6 @@ return new class extends Migration
             $table->text('work_type_stage_name');
             $table->integer('stage_number');
             $table->integer('work_type_id');
-            $table->integer('stage_number');
             $table->timestamps();
         });
     }
