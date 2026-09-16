@@ -90,6 +90,7 @@
                             <li class="{{ echo_active(request()->route()->getName()=="subdivisions.index") }}"><a href="{{ route("subdivisions.index") }}">अनुभाग</a></li>
                             <li class="{{ echo_active(request()->route()->getName()=="blocks.index") }}"><a href="{{ route("blocks.index") }}">विकासखंड</a></li>
                             <li class="{{ echo_active(request()->route()->getName()=="villages.index") }}"><a href="{{ route("villages.index") }}">ग्राम पंचायत</a></li>
+                            <li class="{{ echo_active(request()->route()->getName()=="village.index") }}"><a href="{{ route("village.index") }}">ग्राम</a></li>
                             <li class="{{ echo_active(request()->route()->getName()=="cities.index") }}"><a href="{{ route("cities.index") }}">शहर</a></li>
                             <li class="{{ echo_active(request()->route()->getName()=="wards.index") }}"><a href="{{ route("wards.index") }}">वार्ड</a></li>
                         </ul>

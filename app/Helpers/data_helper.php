@@ -8,6 +8,10 @@ function get_blocks()
 {
     return \App\Models\Block::all();
 }
+function get_grampanchayats()
+{
+    return \App\Models\Grampanchayat::orderBy('grampanchayat_name')->get();
+}
 function get_departments()
 {
     return \App\Models\Department::all();

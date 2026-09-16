@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Village extends Model
 {
     use HasFactory;
-    protected $primaryKey ="village_id ";
+    protected $primaryKey = "village_id";
 
 
     public function grampanchayat()

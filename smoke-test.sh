@@ -144,6 +144,44 @@ check "undecodable image does not crash the save" "$CODE" "302"
 AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
 check "record still saved despite bad image" "$AFTER" "$((BEFORE + 1))"
 
+# --- village master CRUD -------------------------------------------------
+CODE=$(curl -s -b "$JAR" -o "$TMP/vlist.html" -w '%{http_code}' "$BASE/master/village")
+check "village master lists" "$CODE" "200"
+
+TOKEN=$(csrf "$BASE/master/village")
+CODE=$(post_code "$BASE/master/village" \
+  -d "_token=$TOKEN" -d "village_name=स्मोक ग्राम" -d "village_name_en=Smoke Village" \
+  -d "grampanchayat_id=1")
+check "create village" "$CODE" "302"
+VID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT village_id FROM villages WHERE village_name_en='Smoke Village'" 2>/dev/null)
+if [ -n "$VID" ]; then ok "village persisted (id=$VID)"; else bad "village not written"; fi
+
+# Route-model binding here depends on Village::$primaryKey being exactly
+# "village_id"; it used to carry a trailing space, which broke every lookup.
+CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/village/$VID/edit")
+check "village edit form loads" "$CODE" "200"
+
+TOKEN=$(csrf "$BASE/master/village")
+CODE=$(post_code "$BASE/master/village/$VID" \
+  -d "_token=$TOKEN" -d "_method=PUT" -d "village_name=स्मोक ग्राम संशोधित" \
+  -d "village_name_en=Smoke Village Edited" -d "grampanchayat_id=2")
+check "update village" "$CODE" "302"
+RENAMED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM villages WHERE village_id=$VID AND village_name_en='Smoke Village Edited' AND grampanchayat_id=2" 2>/dev/null)
+check "village update persisted" "$RENAMED" "1"
+
+# A village attached to a work must not be deletable.
+TOKEN=$(csrf "$BASE/master/village")
+post_code "$BASE/master/village/1" -d "_token=$TOKEN" -d "_method=DELETE" > /dev/null
+STILL=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM villages WHERE village_id=1" 2>/dev/null)
+check "village in use is protected from deletion" "$STILL" "1"
+
+TOKEN=$(csrf "$BASE/master/village")
+post_code "$BASE/master/village/$VID" -d "_token=$TOKEN" -d "_method=DELETE" > /dev/null
+GONE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM villages WHERE village_id=$VID" 2>/dev/null)
+check "unused village deletes" "$GONE" "0"
+
 # --- engineer / SDO assignment and contacts ------------------------------
 SDO=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT sdo_emp_id FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
