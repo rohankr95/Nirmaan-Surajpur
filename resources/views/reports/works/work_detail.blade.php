@@ -159,7 +159,9 @@
                 </div>
             </div>
 
-
+            <div class="col-lg-12">
+                @include('reports.works._financial_info',['work'=>$work])
+            </div>
 
             @if($work->ts_id)
             <div class="col-lg-4">
@@ -218,6 +220,20 @@
                     </div>
                     <div class="panel-body bg-success" style="padding: 2px">
                         @include('reports.works.tender_view',['tender'=>$work->tender,'detail_page'=>true])
+                        </div>
+                </div>
+            </div>
+            @endif
+            @if($work->agreement)
+            <div class="col-lg-4">
+                <div class="panel panel-success">
+                    <div class="panel-heading">
+                        <div class="panel-title text-center">
+                            <h4>कार्य आदेश</h4>
+                        </div>
+                    </div>
+                    <div class="panel-body bg-success" style="padding: 2px">
+                        @include('reports.works.agreement_view',['agreement'=>$work->agreement,'work'=>$work])
                         </div>
                 </div>
             </div>

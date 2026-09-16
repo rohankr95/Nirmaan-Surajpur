@@ -27,8 +27,18 @@
                 <a href="{{ route('dashboard') }}"><i class="ti-home"></i> <span>डैशबोर्ड </span></a>
             </li>
 
-            <li class="{{echo_active(request()->route()->getName()=='work.index')}}">
-                <a href="{{ route('work.index') }}"><i class="ti-ruler-pencil"></i> <span>कार्य</span></a>
+            <li class="treeview {{echo_active(request()->route()->getName()=='work.index' || (request()->route()->getName()=='reports.works' && request()->filled('status')))}}">
+                <a href="#">
+                    <i class="ti-ruler-pencil"></i> <span>कार्य</span>
+                    <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+                </a>
+                <ul class="treeview-menu">
+                    <li class="{{ echo_active(request()->route()->getName()=='work.index') }}"><a href="{{ route('work.index') }}">समस्त कार्य</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==9) }}"><a href="{{ route('reports.works') }}?status=9">कार्य प्रगति</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==10) }}"><a href="{{ route('reports.works') }}?status=10">कार्य पूर्ण</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==11) }}"><a href="{{ route('reports.works') }}?status=11">कार्य बंद</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==12) }}"><a href="{{ route('reports.works') }}?status=12">कार्य निरस्त</a></li>
+                </ul>
             </li>
             <li class="{{echo_active(request()->route()->getName()=='technical-sanction.index')}}">
                 <a href="{{ route('technical-sanction.index') }}"><i class="ti-home"></i> <span>तकनीकी स्वीकृति</span></a>
