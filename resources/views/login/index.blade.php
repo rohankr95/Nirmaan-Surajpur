@@ -27,7 +27,7 @@
         <!-- Theme style rtl -->
         <!--<link href="assets/dist/css/styleBD-rtl.css" rel="stylesheet" type="text/css"/>-->
     </head>
-    <body style="background: linear-gradient(135deg, #eef7ee 0%, #cfe8d1 100%); background-repeat: no-repeat; background-size: cover;">
+    <body style="background: url('{{ asset('images/res/auth_bg.jpg') }}'); background-repeat: no-repeat; background-size: cover;">
         <!-- Content Wrapper -->
         <div class="login-wrapper">
 {{--            <div class="back-link">--}}

@@ -1,7 +1,11 @@
 /node_modules
 /public/hot
 /public/storage
-/public/images
+# Runtime uploads land under public/images/<folder> (see store_upload() in
+# app/Helpers/function_helper.php) and should never be committed, but the
+# theme's own static assets under public/images/res/ are real source files.
+/public/images/*
+!/public/images/res/
 /storage/*.key
 /vendor
 .env
