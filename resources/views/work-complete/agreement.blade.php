@@ -5,8 +5,8 @@
 
     <div class="form-group row">
         <div class="col-sm-4">
-            <label for="agreement_date" class="col-form-label">अनुबंध पूर्ण होने की तिथि <span style="color: red">&nbsp;*</span></label>
-            <input class="form-control" type="date" id="agreement_date" name="agreement_date" required>
+            <label for="agreement_date" class="col-form-label">अनुबंध पूर्ण होने की तिथि</label>
+            <input class="form-control" type="date" id="agreement_date" name="agreement_date">
         </div>
         <div class="col-sm-4">
             <label for="work_order_no" class="col-form-label">कार्य आदेश क्रमांक</label>

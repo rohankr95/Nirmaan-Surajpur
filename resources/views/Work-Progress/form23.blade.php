@@ -92,6 +92,21 @@
                                 ])
                             </div>
                         </div>
+                        @if (!$work->tenderChecked)
+                            <div class="panel panel-primary">
+                                <div class="panel-heading">
+                                    <div class="panel-title">
+                                        <h4> कार्य आदेश <small class="text-muted">(वैकल्पिक)</small> </h4>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    @include('work-complete.agreement', [
+                                        'work' => $work,
+                                        'work_status' => $work_status,
+                                    ])
+                                </div>
+                            </div>
+                        @endif
                     @endif
                     @if ($work_status->work_status_id == 8)
                     <div class="panel panel-primary">

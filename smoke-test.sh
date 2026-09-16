@@ -527,6 +527,34 @@ BLANK=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(*) FROM tenders WHERE tender_no='TND-B$RUN' AND work_order_date IS NULL" 2>/dev/null)
 check "tender without work order date stored" "$BLANK" "1"
 
+# --- optional work-order (Agreement) section below the tender form -------
+# tenderChecked=0 (tender applicable, the default) must surface the कार्य आदेश
+# section right alongside निविदा -- not gated behind its own stage anymore.
+curl -s -b "$JAR" -o "$TMP/tenderpage.html" "$BASE/work-progress/create?work_id=$WORK_ID&work_status=6"
+# "वैकल्पिक" (optional) is the work-order panel's own marker -- status 7's
+# name "कार्य आदेश जारी" also contains "कार्य आदेश" and would false-positive.
+if grep -q "वैकल्पिक" "$TMP/tenderpage.html"; then ok "work-order section shown below tender"
+else bad "work-order section missing from tender page"; fi
+
+# None of its fields are mandatory: a submission with only a work order
+# number and no agreement_date must still save, not fail validation.
+RUN2=$(date +%s%N | tail -c 7)
+TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID&work_status=6")
+CODE=$(post_code "$BASE/work-agreement" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "work_status=6" \
+  -F "work_order_no=WO-SMOKE$RUN2" -F "work_order_amount=250000")
+check "optional work order saved with no agreement_date" "$CODE" "302"
+WO_SAVED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM agreements WHERE work_order_no='WO-SMOKE$RUN2' AND agreement_date IS NULL" 2>/dev/null)
+check "work order row stored with a null agreement_date" "$WO_SAVED" "1"
+
+# A work marked "निविदा लागू नहीं है" must not offer the work-order section.
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET tenderChecked=1 WHERE work_id=$WORK_ID" 2>/dev/null
+curl -s -b "$JAR" -o "$TMP/notender.html" "$BASE/work-progress/create?work_id=$WORK_ID&work_status=6"
+if grep -q "वैकल्पिक" "$TMP/notender.html"; then bad "work-order section shown despite निविदा लागू नहीं है"
+else ok "work-order section hidden when tender is not applicable"; fi
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET tenderChecked=0 WHERE work_id=$WORK_ID" 2>/dev/null
+
 # Mandatory fields must fail validation rather than reach the database and
 # raise a NOT NULL error. Closing a work with no close date is the cheapest
 # example of the class.
@@ -569,6 +597,13 @@ if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "p
 else bad "progress photo not rendered"; fi
 if grep -qE 'images/Work-Complete/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "completion photo rendered in gallery"
 else bad "completion photo not rendered"; fi
+
+# The printable dossier builds its own photo list straight from work_progress
+# and must also pick up work_progress_images entries, not just the legacy
+# single upload_file column.
+curl -s -b "$JAR" -o "$TMP/dossier_photos.html" "$BASE/reports/work-dossier/$WORK_ID"
+if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/dossier_photos.html"; then ok "progress photo rendered on the dossier"
+else bad "progress photo missing from the dossier"; fi
 
 # --- work-progress status dropdown must list every real status -----------
 # CWorkStatus was 4 hardcoded options unrelated to work_statuses. It now

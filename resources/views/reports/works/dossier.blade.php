@@ -172,9 +172,22 @@
     </table>
 
     @php
+        // A status update can carry several files (work_progress_images) on
+        // top of the older single upload_file column, so each entry is
+        // flattened before filtering down to actual images.
+        $isImageFile = fn ($file) => in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp','bmp']);
         $shots = $work->work_progress
-            ->filter(fn ($e) => filled($e->upload_file)
-                && in_array(strtolower(pathinfo($e->upload_file, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp','bmp']))
+            ->flatMap(function ($entry) use ($isImageFile) {
+                $files = $entry->images->pluck('file_path');
+                if (filled($entry->upload_file)) {
+                    $files->push($entry->upload_file);
+                }
+                return $files->unique()->filter($isImageFile)->map(fn ($file) => (object) [
+                    'file' => $file,
+                    'date' => $entry->status_update_date,
+                    'stage' => $entry->workTypeStage->work_type_stage_name ?? '',
+                ]);
+            })
             ->take(6);
     @endphp
     @if($shots->isNotEmpty())
@@ -182,10 +195,10 @@
         <div class="photos">
             @foreach($shots as $shot)
                 <figure>
-                    <img src="{{ asset($shot->upload_file) }}" alt="{{ $shot->workTypeStage->work_type_stage_name ?? '' }}">
+                    <img src="{{ asset($shot->file) }}" alt="{{ $shot->stage }}">
                     <figcaption>
-                        {{ $shot->workTypeStage->work_type_stage_name ?? '' }}
-                        @if($shot->status_update_date) — {{ date('d-m-Y', strtotime($shot->status_update_date)) }} @endif
+                        {{ $shot->stage }}
+                        @if($shot->date) — {{ date('d-m-Y', strtotime($shot->date)) }} @endif
                     </figcaption>
                 </figure>
             @endforeach

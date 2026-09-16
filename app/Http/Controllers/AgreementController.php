@@ -42,13 +42,13 @@ class AgreementController extends Controller
          // dd($request->all());
          $validator = Validator::make($request->all(), [
             'work_id' => 'required',
-            'agreement_date' => 'required|date',
+            'agreement_date' => 'nullable|date',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
         $agreement = new Agreement();
-        $agreement->agreement_date = $request->agreement_date;
+        $agreement->agreement_date = $request->agreement_date ?: null;
         $agreement->work_order_no = $request->work_order_no;
         $agreement->work_order_date = $request->work_order_date;
         $agreement->work_order_amount = $request->work_order_amount;
