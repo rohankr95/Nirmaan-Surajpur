@@ -28,6 +28,7 @@ class LogActivity extends Model
         'Saved Tender'         => 'निविदा दर्ज की गई',
         'Updated Tender'       => 'निविदा अद्यतन की गई',
         'Saved Agreement'      => 'अनुबंध दर्ज किया गया',
+        'Updated Agreement'    => 'अनुबंध अद्यतन किया गया',
         'Saved Work Progress'  => 'कार्य प्रगति दर्ज की गई',
         'Update Work Progress' => 'कार्य प्रगति अद्यतन की गई',
         'Saved Work Completed' => 'कार्य पूर्ण दर्ज किया गया',

@@ -47,19 +47,24 @@ class AgreementController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-        $agreement = new Agreement();
+        // A work order is edited far more often than a fresh one is entered
+        // (someone skipped it while updating the tender and comes back to
+        // fill it in later), so re-submitting updates the existing record
+        // for this work rather than piling up duplicate rows.
+        $work = Work::find($request->work_id);
+        $agreement = $work->agreement ?? new Agreement();
         $agreement->agreement_date = $request->agreement_date ?: null;
         $agreement->work_order_no = $request->work_order_no;
         $agreement->work_order_date = $request->work_order_date;
         $agreement->work_order_amount = $request->work_order_amount;
         $agreement->contractor_id = $request->contractor_id ?: null;
-        $agreement->upload_file = store_upload($request->file, 'Agreement');
+        $agreement->upload_file = store_upload($request->file, 'Agreement') ?? $agreement->upload_file;
         $agreement->remark = $request->remark;
         $agreement->work_id = $request->work_id;
         $agreement->save();
-        $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status]);
-        LogActivity::addToLog('Saved Agreement','Agreement',$agreement->id,$request->work_id);
-        return redirect()->route('work-progress.index')->with('success','Agreement Added Successfully !');
+        $work->update(['work_status' => $request->work_status]);
+        LogActivity::addToLog($agreement->wasRecentlyCreated ? 'Saved Agreement' : 'Updated Agreement', 'Agreement', $agreement->id, $request->work_id);
+        return redirect()->route('work-progress.index')->with('success', 'Agreement Saved Successfully !');
     }
 
     /**

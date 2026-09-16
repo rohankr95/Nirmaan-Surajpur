@@ -102,8 +102,7 @@ class TenderController extends Controller
         $work = Work::find($work);
         $work_status = WorkStatus::find($work->work_status);
         $edit = 1;
-        return view('Tender.tenderform', compact('work', 'work_status', 'edit'));
-        //        return view('Tender.form', compact('tender', 'work'));
+        return view('Tender.edit_modal', compact('work', 'work_status', 'edit'));
     }
 
     /**

@@ -555,6 +555,26 @@ if grep -q "वैकल्पिक" "$TMP/notender.html"; then bad "work-order
 else ok "work-order section hidden when tender is not applicable"; fi
 mysql -ularavel -plaravel nirmaan -e "UPDATE works SET tenderChecked=0 WHERE work_id=$WORK_ID" 2>/dev/null
 
+# Re-submitting (e.g. via the निविदा edit pencil on the work-detail page,
+# after someone skipped the work order the first time) must correct the
+# existing agreement in place, not create a second row for the same work.
+BEFORE_WO=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM agreements WHERE work_id=$WORK_ID" 2>/dev/null)
+TOKEN=$(csrf "$BASE/tender/$WORK_ID/edit")
+CODE=$(post_code "$BASE/work-agreement" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "work_status=6" \
+  -F "work_order_no=WO-SMOKE-CORRECTED$RUN2" -F "work_order_amount=275000")
+check "re-submitted work order saved" "$CODE" "302"
+AFTER_WO=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM agreements WHERE work_id=$WORK_ID" 2>/dev/null)
+check "work order row count unchanged (updated, not duplicated)" "$AFTER_WO" "$BEFORE_WO"
+CORRECTED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM agreements WHERE work_id=$WORK_ID AND work_order_no='WO-SMOKE-CORRECTED$RUN2'" 2>/dev/null)
+check "existing agreement row carries the corrected value" "$CORRECTED" "1"
+
+# The निविदा edit modal must also show that same work-order data, pre-filled.
+curl -s -b "$JAR" -o "$TMP/tenderedit.html" "$BASE/tender/$WORK_ID/edit"
+if grep -q "WO-SMOKE-CORRECTED$RUN2" "$TMP/tenderedit.html"; then ok "tender edit modal shows the existing work order, pre-filled"
+else bad "tender edit modal does not show the existing work order"; fi
+
 # Mandatory fields must fail validation rather than reach the database and
 # raise a NOT NULL error. Closing a work with no close date is the cheapest
 # example of the class.
