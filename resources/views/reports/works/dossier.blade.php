@@ -136,7 +136,14 @@
         </tr>
         <tr>
             <th>निविदा खुलने की दिनांक</th><td class="val">{{ optional($work->tender)->tender_opening_date ? date('d-m-Y', strtotime($work->tender->tender_opening_date)) : '—' }}</td>
-            <th>कार्य आदेश दिनांक</th><td class="val">{{ optional($work->tender)->work_order_date ? date('d-m-Y', strtotime($work->tender->work_order_date)) : '—' }}</td>
+            <th>कार्य आदेश क्रमांक</th><td class="val">{{ optional($work->agreement)->work_order_no ?? '—' }}</td>
+        </tr>
+        <tr>
+            <th>कार्य आदेश दिनांक</th><td class="val">{{ optional($work->agreement)->work_order_date ? date('d-m-Y', strtotime($work->agreement->work_order_date)) : '—' }}</td>
+            <th>कार्य आदेश राशि</th><td class="val">{{ optional($work->agreement)->work_order_amount ? '₹ '.number_format($work->agreement->work_order_amount, 2) : '—' }}</td>
+        </tr>
+        <tr>
+            <th>ठेकेदार / ग्रामपंचायत</th><td class="val" colspan="3">{{ optional(optional($work->agreement)->contractor)->contractor_name ?? '—' }}</td>
         </tr>
     </table>
 

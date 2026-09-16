@@ -85,6 +85,10 @@ class Work extends Model
     {
         return $this->belongsTo(Employee::class,'sdo_emp_id','emp_id');
     }
+    public function agreement()
+    {
+        return $this->hasOne(Agreement::class,'work_id','work_id')->latestOfMany();
+    }
     public function payments()
     {
         return $this->hasMany(WorkPayment::class,'work_id','work_id');

@@ -48,6 +48,7 @@ Route::middleware([IsLoggedIn::class])->group(function () {
         // Historic naming: the "villages" resource lists gram panchayats.
         Route::resource("villages",Master\GrampanchayatController::class);
         Route::resource("village",Master\VillageController::class);
+        Route::resource("contractor",Master\ContractorController::class);
         Route::resource("cities",Master\CityController::class);
         Route::resource("wards",Master\WardController::class);
 

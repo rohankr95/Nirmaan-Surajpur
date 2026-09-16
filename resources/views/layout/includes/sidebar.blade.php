@@ -111,6 +111,8 @@
                     <li class="{{ echo_active(request()->route()->getName()=="work_types.index") }}"><a href="{{ route("work_types.index") }}">कार्य प्रकार और चरण</a></li>
 
                     <li class="{{ echo_active(request()->route()->getName()=="employee.index") }}"><a href="{{ route("employee.index") }}">कर्मचारी</a></li>
+
+                    <li class="{{ echo_active(request()->route()->getName()=="contractor.index") }}"><a href="{{ route("contractor.index") }}">ठेकेदार</a></li>
                     
                     @if (is_admin())
                     <li class="{{ echo_active(request()->route()->getName()=="employee-designation.index") }}"><a href="{{ route("employee-designation.index") }}">कर्मचारी पदनाम</a></li>

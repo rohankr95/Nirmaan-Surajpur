@@ -220,6 +220,45 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- contractor master and work order ------------------------------------
+CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/contractor")
+check "contractor master lists" "$CODE" "200"
+
+CNAME="स्मोक ठेकेदार $RANDOM"
+TOKEN=$(csrf "$BASE/master/contractor")
+CODE=$(post_code "$BASE/master/contractor" \
+  -d "_token=$TOKEN" -d "contractor_name=$CNAME" -d "contact_person=रा. सिंह" \
+  -d "mobile=9812345670" -d "registration_no=REG-77")
+check "create contractor" "$CODE" "302"
+CID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT contractor_id FROM contractors ORDER BY contractor_id DESC LIMIT 1" 2>/dev/null)
+if [ -n "$CID" ]; then ok "contractor persisted (id=$CID)"; else bad "contractor not written"; fi
+
+# The agreement row is the work order: number, date, amount, contractor, file.
+TOKEN=$(csrf "$BASE/work")
+CODE=$(post_code "$BASE/work-agreement" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "work_status=7" \
+  -F "agreement_date=2026-07-05" -F "work_order_no=WO-$RANDOM" \
+  -F "work_order_date=2026-07-01" -F "work_order_amount=950000" \
+  -F "contractor_id=$CID" -F "remark=कार्य आदेश जारी" \
+  -F "file=@$TMP/photo.png;type=image/png")
+check "record a work order" "$CODE" "302"
+
+WO=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM agreements WHERE work_id=$WORK_ID AND contractor_id=$CID AND work_order_amount=950000.00 AND upload_file IS NOT NULL" 2>/dev/null)
+check "work order stored with contractor and document" "$WO" "1"
+
+# A contractor holding work orders must not be deletable.
+TOKEN=$(csrf "$BASE/master/contractor")
+post_code "$BASE/master/contractor/$CID" -d "_token=$TOKEN" -d "_method=DELETE" > /dev/null
+STILL=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM contractors WHERE contractor_id=$CID" 2>/dev/null)
+check "contractor in use is protected from deletion" "$STILL" "1"
+
+curl -s -b "$JAR" -o "$TMP/dos2.html" "$BASE/reports/work-dossier/$WORK_ID"
+if grep -q "$CNAME" "$TMP/dos2.html"; then ok "contractor named on the dossier"
+else bad "contractor missing from the dossier"; fi
+
 # --- payment ledger ------------------------------------------------------
 SANCTION=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT sanction_amount FROM works WHERE work_id=$WORK_ID" 2>/dev/null)

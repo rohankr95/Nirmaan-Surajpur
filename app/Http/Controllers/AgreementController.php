@@ -49,6 +49,11 @@ class AgreementController extends Controller
         }
         $agreement = new Agreement();
         $agreement->agreement_date = $request->agreement_date;
+        $agreement->work_order_no = $request->work_order_no;
+        $agreement->work_order_date = $request->work_order_date;
+        $agreement->work_order_amount = $request->work_order_amount;
+        $agreement->contractor_id = $request->contractor_id ?: null;
+        $agreement->upload_file = store_upload($request->file, 'Agreement');
         $agreement->remark = $request->remark;
         $agreement->work_id = $request->work_id;
         $agreement->save();
