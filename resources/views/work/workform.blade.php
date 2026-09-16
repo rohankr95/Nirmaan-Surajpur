@@ -182,6 +182,12 @@
                         value="{{ isset($work) ? $work->units_of_work : '' }}">
                 </div>
                 <div class="col-sm-3">
+                    <label for="sanction_amount" class="col-form-label">स्वीकृति राशि (रुपये में)</label>
+                    <input class="form-control" type="number" step="0.01" min="0" id="sanction_amount"
+                        name="sanction_amount" placeholder="राशि"
+                        value="{{ isset($work) ? $work->sanction_amount : '' }}">
+                </div>
+                <div class="col-sm-3">
                     <label for="work_name" class="col-form-label">कार्य नाम <span
                             style="color: red">&nbsp;*</span></label>
                     <input class="form-control" type="text" placeholder="कार्य नाम" id="work_name"

@@ -4,6 +4,7 @@ use App\Http\Controllers\AdministrativeSanctionController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Master;
 use App\Http\Controllers\Master\CityController;
 use App\Http\Controllers\Reports;
@@ -60,6 +61,13 @@ Route::middleware([IsLoggedIn::class])->group(function () {
         Route::resource("employee-designation",Master\EmployeeDesignationController::class);
 
     });
+    // Work payment ledger
+    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('payments/create', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('payments', [PaymentController::class, 'store'])->name('payments.store');
+    Route::get('payments/history', [PaymentController::class, 'history'])->name('payments.history');
+    Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+
     // Used for work crud
     Route::resource('work', WorkController::class);
     Route::post('api/fetch-CityToWard', [WorkController::class, 'fetchCityToWard']);

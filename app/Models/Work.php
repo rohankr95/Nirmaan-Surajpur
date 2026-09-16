@@ -10,7 +10,7 @@ use PhpParser\Node\Expr\FuncCall;
 class Work extends Model
 {
     use HasFactory,SoftDeletes;
-    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','ward_id','financial_year_id','employee_id','sdo_emp_id'];
+    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','ward_id','financial_year_id','employee_id','sdo_emp_id','sanction_amount'];
     protected $primaryKey = 'work_id';
 
     public function work_type()
@@ -84,5 +84,49 @@ class Work extends Model
     public function sdo()
     {
         return $this->belongsTo(Employee::class,'sdo_emp_id','emp_id');
+    }
+    public function payments()
+    {
+        return $this->hasMany(WorkPayment::class,'work_id','work_id');
+    }
+
+    /**
+     * Totals are summed from the ledger on read rather than kept on the work,
+     * so a figure can never disagree with the entries behind it.
+     */
+    public function paymentTotal(string $type): float
+    {
+        return (float) $this->payments->where('payment_type', $type)->sum('amount');
+    }
+
+    public function getReleasedAmountAttribute(): float
+    {
+        return $this->paymentTotal('released');
+    }
+
+    public function getExpenditureAmountAttribute(): float
+    {
+        return $this->paymentTotal('expenditure');
+    }
+
+    public function getEvaluationAmountAttribute(): float
+    {
+        return $this->paymentTotal('evaluation');
+    }
+
+    /**
+     * What the district has sanctioned but not yet released.
+     */
+    public function getBalanceAmountAttribute(): float
+    {
+        return (float) $this->sanction_amount - $this->released_amount;
+    }
+
+    /**
+     * What has been released but not yet spent.
+     */
+    public function getUnspentAmountAttribute(): float
+    {
+        return $this->released_amount - $this->expenditure_amount;
     }
 }

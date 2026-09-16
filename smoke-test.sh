@@ -56,7 +56,7 @@ CODE=$(post_code "$BASE/work" \
   -d "work_name=स्मोक टेस्ट सीसी रोड" \
   -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
   -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" -d "sdo_emp_id=2" \
-  -d "unit_work=1" \
+  -d "unit_work=1" -d "sanction_amount=1000000" \
   -d "dpr_startDate=2026-04-01" -d "dpr_endDate=2026-04-30" \
   -d "workComplete_endDate=2027-03-31")
 check "create work" "$CODE" "302"
@@ -220,29 +220,93 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- payment ledger ------------------------------------------------------
+SANCTION=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT sanction_amount FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+check "sanction amount recorded on the work" "$SANCTION" "1000000.00"
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/pay.html" -w '%{http_code}' "$BASE/payments")
+check "payment list loads" "$CODE" "200"
+
+add_payment() { # add_payment <type> <amount> <date> <remark>
+  local t; t=$(csrf "$BASE/payments")
+  post_code "$BASE/payments" -d "_token=$t" -d "work_id=$WORK_ID" \
+    -d "payment_type=$1" -d "amount=$2" -d "payment_date=$3" -d "remark=$4"
+}
+
+CODE=$(add_payment released 400000 2026-06-12 "प्रथम भुगतान जारी किया गया")
+check "record a released instalment" "$CODE" "302"
+CODE=$(add_payment released 200000 2026-09-15 "द्वितीय किस्त")
+check "record a second released instalment" "$CODE" "302"
+CODE=$(add_payment expenditure 150000 2026-09-15 "विभाग द्वारा व्यय")
+check "record an expenditure" "$CODE" "302"
+CODE=$(add_payment evaluation 180000 2026-09-15 "इंजीनियर मूल्यांकन")
+check "record an evaluation" "$CODE" "302"
+
+LEDGER=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_payments WHERE work_id=$WORK_ID" 2>/dev/null)
+check "ledger holds every entry" "$LEDGER" "4"
+
+# Totals must be derived from the ledger, so released is the sum of both
+# instalments rather than the latest one.
+RELEASED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COALESCE(SUM(amount),0) FROM work_payments WHERE work_id=$WORK_ID AND payment_type='released'" 2>/dev/null)
+check "released total sums the instalments" "$RELEASED" "600000.00"
+
+curl -s -b "$JAR" -o "$TMP/payl.html" "$BASE/payments"
+# 1,000,000 sanctioned less 600,000 released leaves 400,000.
+if grep -q "400,000.00" "$TMP/payl.html"; then ok "balance derived on the payment list"
+else bad "balance not shown correctly on the payment list"; fi
+if grep -q "600,000.00" "$TMP/payl.html"; then ok "released total shown on the payment list"
+else bad "released total missing from the payment list"; fi
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/hist.html" -w '%{http_code}' "$BASE/payments/history?work_id=$WORK_ID")
+check "payment history loads" "$CODE" "200"
+if grep -q "प्रथम भुगतान जारी किया गया" "$TMP/hist.html"; then ok "history shows the entry remark"
+else bad "history missing entry remarks"; fi
+# Each figure names the party that reports it, which is the point of splitting
+# the ledger by type rather than keeping one running total.
+if grep -q "जारी (जिला द्वारा)" "$TMP/hist.html"; then ok "history attributes released to the district"
+else bad "history does not attribute figures to a party"; fi
+
+# A payment must be refused against a work outside the caller's scope, and
+# zero or negative amounts must not be accepted.
+TOKEN=$(csrf "$BASE/payments")
+CODE=$(post_code "$BASE/payments" -d "_token=$TOKEN" -d "work_id=$WORK_ID" \
+  -d "payment_type=released" -d "amount=0" -d "payment_date=2026-09-15")
+check "zero-amount payment is rejected" "$CODE" "302"
+ZERO=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_payments WHERE work_id=$WORK_ID AND amount=0" 2>/dev/null)
+check "zero-amount payment not stored" "$ZERO" "0"
+
+PAYLOG=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM log_activities WHERE work_id=$WORK_ID AND subject_type='Payment'" 2>/dev/null)
+check "payments appear in the work audit trail" "$PAYLOG" "4"
+
 # --- tender save, including the work order date --------------------------
 # The tender form always posts to store(): edit() never passes $tender to the
 # view, so isset($tender) is false and update() is unreachable from the UI.
+RUN=$(date +%s%N | tail -c 7)
 TOKEN=$(csrf "$BASE/tender/$WORK_ID/edit")
 CODE=$(post_code "$BASE/tender" \
-  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-1" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-A$RUN" \
   -F "tender_release_date=2026-06-01" -F "tender_opening_date=2026-06-20" \
   -F "work_order_date=2026-07-01" -F "work_status=6" -F "remark=स्मोक निविदा")
 check "save tender with work order date" "$CODE" "302"
 WOD=$(mysql -ularavel -plaravel nirmaan -N -e \
-  "SELECT work_order_date FROM tenders WHERE tender_no='TND-1'" 2>/dev/null)
+  "SELECT work_order_date FROM tenders WHERE tender_no='TND-A$RUN'" 2>/dev/null)
 check "work order date persisted" "$WOD" "2026-07-01"
 
 # The same form with the work order date left blank must still save: the column
 # is nullable in production and the field is optional on the form.
 TOKEN=$(csrf "$BASE/tender/$WORK_ID/edit")
 CODE=$(post_code "$BASE/tender" \
-  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-2" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-B$RUN" \
   -F "tender_release_date=2026-06-01" -F "tender_opening_date=2026-06-20" \
   -F "work_order_date=" -F "work_status=6")
 check "tender saves without a work order date" "$CODE" "302"
 BLANK=$(mysql -ularavel -plaravel nirmaan -N -e \
-  "SELECT COUNT(*) FROM tenders WHERE tender_no='TND-2'" 2>/dev/null)
+  "SELECT COUNT(*) FROM tenders WHERE tender_no='TND-B$RUN' AND work_order_date IS NULL" 2>/dev/null)
 check "tender without work order date stored" "$BLANK" "1"
 
 # Mandatory fields must fail validation rather than reach the database and

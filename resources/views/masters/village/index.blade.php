@@ -1,6 +1,6 @@
 @extends('layout.app')
 @section('content')
-    @include('layout.includes.page_header',['icon'=>'home','text'=>'ग्राम'])
+    @include('layout.includes.page_header',['icon'=>'home','title'=>'ग्राम सूची'])
     <!-- Main content -->
     <div class="content">
 
