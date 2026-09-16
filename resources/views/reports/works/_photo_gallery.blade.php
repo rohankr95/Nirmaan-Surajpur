@@ -24,7 +24,13 @@
 <div class="panel panel-success">
     <div class="panel-heading">
         <div class="panel-title text-center">
-            <h4>कार्य के छायाचित्र</h4>
+            <h4>कार्य के छायाचित्र
+                <span class="pull-right">
+                    <button onclick="openEditModal('छायाचित्र जोड़ें / बदलें','{{ route('work-progress-images.create', ['work_id' => $work->work_id]) }}');" class="btn btn-sm btn-warning">
+                        <i class="fa fa-pencil"></i>
+                    </button>
+                </span>
+            </h4>
         </div>
     </div>
     <div class="panel-body">

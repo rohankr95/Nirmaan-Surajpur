@@ -102,6 +102,11 @@ Route::middleware([IsLoggedIn::class])->group(function () {
     Route::post('work-progress-As', [DashboardController::class, 'work_progress_As'])->name('work-progress-As');
     Route::post('work-progress-Tender', [DashboardController::class, 'work_progress_Tender'])->name('work-progress-Tender');
 
+    // Add/replace gallery photos on an existing stage without recording a
+    // new status update -- for photos that were never uploaded or were lost.
+    Route::get('work-progress-images/create', [WorkProgressController::class, 'galleryUploadForm'])->name('work-progress-images.create');
+    Route::post('work-progress-images', [WorkProgressController::class, 'galleryUploadStore'])->name('work-progress-images.store');
+
     // work-completion & rejection routes
     Route::post('work-closed',[WorkClosedController::class,'store'])->name('work-closed');
     Route::post('work-complete',[WorkCompleteController::class,'store'])->name('work-complete');

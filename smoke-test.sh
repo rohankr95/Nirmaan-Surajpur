@@ -86,6 +86,43 @@ WP=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(*) FROM work_progress_images WHERE work_progress_id=$WP_ID" 2>/dev/null)
 check "both progress photos stored" "$WP" "2"
 
+# --- gallery-only photo repair (पेंसिल icon on कार्य के छायाचित्र) --------
+# Adding/replacing a stage's photos must never touch the work's own
+# status/stage -- it is a photo-only action, not a progress update.
+STATUS_BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_status FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+STAGE_BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_stage FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/galleryform.html" -w '%{http_code}' "$BASE/work-progress-images/create?work_id=$WORK_ID")
+check "gallery upload form loads" "$CODE" "200"
+if grep -q "फिनिशिंग" "$TMP/galleryform.html"; then ok "gallery upload form lists the work's stages"
+else bad "gallery upload form missing stage options"; fi
+
+# Stage 3 has no work_progress entry yet -- a bare one must be created for it.
+BEFORE_S3=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress WHERE work_id=$WORK_ID AND mb_stages_id=3" 2>/dev/null)
+TOKEN=$(csrf "$BASE/work-progress-images/create?work_id=$WORK_ID")
+CODE=$(post_code "$BASE/work-progress-images" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=3" \
+  -F "files[]=@$TMP/photo.png;type=image/png")
+check "gallery-only upload accepted" "$CODE" "302"
+AFTER_S3=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress WHERE work_id=$WORK_ID AND mb_stages_id=3" 2>/dev/null)
+check "a bare progress entry was created for the untouched stage" "$AFTER_S3" "$((BEFORE_S3 + 1))"
+
+STATUS_AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_status FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+STAGE_AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_stage FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+check "work_status unchanged by a gallery-only upload" "$STATUS_AFTER" "$STATUS_BEFORE"
+check "work_stage unchanged by a gallery-only upload" "$STAGE_AFTER" "$STAGE_BEFORE"
+
+# Uploading again for the same stage must reuse that entry, not duplicate it.
+TOKEN=$(csrf "$BASE/work-progress-images/create?work_id=$WORK_ID")
+post_code "$BASE/work-progress-images" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=3" \
+  -F "files[]=@$TMP/photo.png;type=image/png" > /dev/null
+STILL_ONE=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress WHERE work_id=$WORK_ID AND mb_stages_id=3" 2>/dev/null)
+check "second gallery upload for the same stage reused the entry" "$STILL_ONE" "$AFTER_S3"
+
 # --- work completion, previously impossible on a fresh DB ----------------
 TOKEN=$(csrf "$BASE/work")
 CODE=$(post_code "$BASE/work-complete" \

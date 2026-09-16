@@ -126,6 +126,58 @@ class WorkProgressController extends Controller
     }
 
     /**
+     * The form for adding/replacing gallery photos on an existing stage,
+     * independent of recording a new status update -- for when photos were
+     * never uploaded or were lost and need to be added back later.
+     */
+    public function galleryUploadForm(Request $request)
+    {
+        $work = Work::findOrFail($request->work_id);
+        return view('Work-Progress.gallery_upload_form', compact('work'))->render();
+    }
+
+    /**
+     * Attaches uploaded photos to the work's latest progress entry for the
+     * chosen stage, creating a bare entry for that stage if none exists yet.
+     * This never touches the work's own status/stage -- it is a photo-only
+     * repair action, not a progress update.
+     */
+    public function galleryUploadStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'work_id' => 'required',
+            'mb_stages' => 'required',
+            'files' => 'required|array|min:1',
+            'files.*' => 'mimes:jpeg,jpg,png,gif,webp,pdf',
+        ]);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $work = Work::findOrFail($request->work_id);
+
+        $workProgress = WorkProgress::where('work_id', $work->work_id)
+            ->where('mb_stages_id', $request->mb_stages)
+            ->latest('wp_id')
+            ->first();
+
+        if (!$workProgress) {
+            $workProgress = new WorkProgress();
+            $workProgress->work_id = $work->work_id;
+            $workProgress->mb_stages_id = $request->mb_stages;
+            $workProgress->work_status_id = $work->work_status;
+            $workProgress->status_update_date = date('Y-m-d');
+            $workProgress->save();
+        }
+
+        $this->storeProgressImages($workProgress, $request->file('files', []));
+
+        LogActivity::addToLog('Update Work Progress', 'Work Progress', $workProgress->wp_id, $work->work_id, 'छायाचित्र जोड़े/बदले गए');
+
+        return back()->with('success', 'छायाचित्र सफलतापूर्वक अपलोड किए गए');
+    }
+
+    /**
      * A status update can carry several photos/bills at once; each becomes
      * its own row so the detail-page gallery can show them all.
      */
