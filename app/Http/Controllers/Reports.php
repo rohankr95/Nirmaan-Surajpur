@@ -99,6 +99,12 @@ class Reports extends Controller
             ->get();
         return view('reports.works.work_detail',compact('work','activity'));
     }
+    public function work_dossier($work)
+    {
+        $work = Work::findOrFail($work);
+        return view('reports.works.dossier', compact('work'));
+    }
+
     public function technical_sanction(Request $request)
     {
         $users = User::all();

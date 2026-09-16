@@ -220,6 +220,28 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- printable, signable work dossier ------------------------------------
+CODE=$(curl -s -b "$JAR" -o "$TMP/dossier.html" -w '%{http_code}' "$BASE/reports/work-dossier/$WORK_ID")
+check "work dossier loads" "$CODE" "200"
+if grep -q "कार्य विवरण प्रपत्र" "$TMP/dossier.html"; then ok "dossier title present"
+else bad "dossier title missing"; fi
+# The signature block is the point of the document: it is what makes it usable
+# in the physical approval chain.
+SIGS=0
+for role in "उप अभियंता" "एसडीओ / सहायक अभियंता" "कार्यपालन अभियंता" "सक्षम अधिकारी"; do
+  grep -q "$role" "$TMP/dossier.html" && SIGS=$((SIGS+1))
+done
+check "all four signature blocks present" "$SIGS" "4"
+if grep -q "@media print" "$TMP/dossier.html"; then ok "print stylesheet included"
+else bad "no print stylesheet"; fi
+if grep -q "यह प्रणाली द्वारा तैयार किया गया दस्तावेज़ है" "$TMP/dossier.html"; then ok "system-generated footer present"
+else bad "system-generated footer missing"; fi
+if grep -q "9876543210" "$TMP/dossier.html"; then ok "officer contacts carried into the dossier"
+else bad "officer contacts missing from dossier"; fi
+if grep -q "work-dossier" "$TMP/detail.html" 2>/dev/null || curl -s -b "$JAR" "$BASE/reports/work-details/$WORK_ID" | grep -q "work-dossier"; then
+  ok "print button linked from work detail"
+else bad "no print button on work detail"; fi
+
 # --- stage-grouped photo gallery -----------------------------------------
 curl -s -b "$JAR" -o "$TMP/detail.html" "$BASE/reports/work-details/$WORK_ID"
 if grep -q "कार्य के छायाचित्र" "$TMP/detail.html"; then ok "photo gallery panel renders"

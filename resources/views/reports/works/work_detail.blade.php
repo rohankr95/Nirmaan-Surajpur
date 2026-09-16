@@ -144,6 +144,12 @@
                         </div>
 
                         <div style="margin:20px;" class="text-center">
+                            <a href="{{ route('reports.work-dossier', $work->work_id) }}" target="_blank" class="btn btn-labeled btn-success">
+                                <span class="btn-label"><i class="fa fa-print"></i></span>कार्य प्रपत्र प्रिंट करें
+                            </a>
+                        </div>
+
+                        <div style="margin:20px;" class="text-center">
                             <button onclick="openDeleteModal('क्या आप रिकॉर्ड को स्थायी रूप से हटाना चाहते हैं ?','{{route('work.show',$work->work_id)}}');" class="btn btn-labeled btn-danger">
                                 <span class="btn-label"><i class="fa fa-trash"></i></span>कार्य हटाये
                             </button>
