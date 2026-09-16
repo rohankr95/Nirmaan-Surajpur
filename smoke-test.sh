@@ -112,6 +112,11 @@ check "work detail page" "$CODE" "200"
 # The TS entry form lives on the edit route; create() renders a stub with no form.
 TS_FORM="$BASE/technical-sanction/$WORK_ID/edit"
 
+# Counts are taken relative to a baseline so the script can be re-run against
+# an already-populated database without the assertions drifting.
+TS_BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
+
 TOKEN=$(csrf "$TS_FORM")
 post_code "$BASE/technical-sanction" \
   -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "ts_no=TS-A" \
@@ -123,12 +128,13 @@ post_code "$BASE/technical-sanction" \
   -F "submission_date=2026-05-01" -F "ts_amount=200000" -F "work_status=3" \
   -F "file=@$TMP/photo.png;type=image/png" > /dev/null
 
-UPLOADED=$(mysql -ularavel -plaravel nirmaan -N -e \
+TS_AFTER=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(*) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
-check "both rapid uploads were stored" "$UPLOADED" "2"
+check "both rapid uploads were stored" "$TS_AFTER" "$((TS_BEFORE + 2))"
+# Every stored upload must still have its own filename.
 DISTINCT=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(DISTINCT upload_file) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
-check "rapid uploads got distinct filenames" "$DISTINCT" "2"
+check "rapid uploads got distinct filenames" "$DISTINCT" "$TS_AFTER"
 
 # A file that claims to be an image but will not decode must not 500. Posted to
 # work-progress rather than a sanction: the sanctions carry a `mimes` rule that
