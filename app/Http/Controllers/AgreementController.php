@@ -52,7 +52,7 @@ class AgreementController extends Controller
         $agreement->work_id = $request->work_id;
         $agreement->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status]);
-        LogActivity::addToLog('Saved Agreement','Agreement',$agreement->id);
+        LogActivity::addToLog('Saved Agreement','Agreement',$agreement->id,$request->work_id);
         return redirect()->route('work-progress.index')->with('success','Agreement Added Successfully !');
     }
 

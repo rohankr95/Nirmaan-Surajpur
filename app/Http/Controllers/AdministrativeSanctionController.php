@@ -78,7 +78,7 @@ class AdministrativeSanctionController extends Controller
         $as->remark = $request->remark;
         $as->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'as_id'=>$as->as_id]);
-        LogActivity::addToLog('Saved AS','AS',$as->as_id);
+        LogActivity::addToLog('Saved AS','AS',$as->as_id,$request->work_id);
         return redirect()->route('administrative-sanction.index')->with('success', 'AS Added Successfully !');
     }
 
@@ -145,7 +145,7 @@ class AdministrativeSanctionController extends Controller
         {
             $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'as_id'=>$administrativeSanction->as_id]);
         }
-        LogActivity::addToLog('Updated AS','AS',$administrativeSanction->as_id);
+        LogActivity::addToLog('Updated AS','AS',$administrativeSanction->as_id,$request->work_id);
         return redirect()->route('administrative-sanction.index')->with('success', 'AS Updated Successfully !');
     }
 

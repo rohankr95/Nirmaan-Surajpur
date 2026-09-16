@@ -50,7 +50,7 @@ class WorkClosedController extends Controller
         $complete->work_id = $request->work_id;
         $complete->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status]);
-        LogActivity::addToLog('Saved Work Closed','Work Closed',$complete->id);
+        LogActivity::addToLog('Saved Work Closed','Work Closed',$complete->id,$request->work_id);
         return redirect()->route('work.index')->with('success','Work Closed Successfully !');
         
     }

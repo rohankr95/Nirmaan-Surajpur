@@ -51,7 +51,7 @@ class WorkRejectController extends Controller
         $reject->work_id = $request->work_id;
         $reject->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,]);
-        LogActivity::addToLog('Saved Work Rejected','Work Reject',$reject->id);
+        LogActivity::addToLog('Saved Work Rejected','Work Reject',$reject->id,$request->work_id);
         return redirect()->route('work.index')->with('success','Work Rejected Added Successfully !');
     }
     /**

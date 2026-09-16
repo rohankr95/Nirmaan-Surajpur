@@ -54,7 +54,7 @@ class WorkCompleteController extends Controller
         $complete->work_id = $request->work_id;
         $complete->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>10]);
-        LogActivity::addToLog('Saved Work Completed','Work Completed',$complete->id);
+        LogActivity::addToLog('Saved Work Completed','Work Completed',$complete->id,$request->work_id);
         return redirect()->route('work.index')->with('success','Work Completed Added Successfully !');
         
     }

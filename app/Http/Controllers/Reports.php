@@ -93,7 +93,11 @@ class Reports extends Controller
     public function work_details( $work)
     {
         $work = Work::find($work);
-        return view('reports.works.work_detail',compact('work'));
+        $activity = LogActivity::with('User')
+            ->forWork($work->work_id)
+            ->orderBy('id', 'desc')
+            ->get();
+        return view('reports.works.work_detail',compact('work','activity'));
     }
     public function technical_sanction(Request $request)
     {

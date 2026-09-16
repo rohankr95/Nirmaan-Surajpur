@@ -201,6 +201,41 @@
             </div>
             @endif
 
+            <div class="col-lg-12">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <div class="panel-title text-center">
+                            <h4>पूर्ववृत्त जानकारी</h4>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-bordered table-striped table-condensed">
+                            <thead>
+                                <tr>
+                                    <th width="5%">क्र.</th>
+                                    <th width="18%">दिनांक</th>
+                                    <th width="22%">उपयोगकर्ता</th>
+                                    <th>विवरण</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse(($activity ?? []) as $index => $entry)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $entry->created_at ? $entry->created_at->format('d-m-Y H:i') : '-' }}</td>
+                                        <td>{{ $entry->User->name ?? '-' }}</td>
+                                        <td>{{ $entry->label }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center">इस कार्य के लिए कोई प्रविष्टि नहीं मिली</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>

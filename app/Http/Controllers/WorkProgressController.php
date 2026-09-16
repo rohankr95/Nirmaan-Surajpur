@@ -117,7 +117,7 @@ class WorkProgressController extends Controller
         $workProgress->description = $request->description;
         $workProgress->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>9, 'work_stage'=>$request->mb_stages]);
-        LogActivity::addToLog('Saved Work Progress','Work Progress',$workProgress->wp_id);
+        LogActivity::addToLog('Saved Work Progress','Work Progress',$workProgress->wp_id,$request->work_id);
         return redirect()->back()->with('success', 'Work-Progres Added Successfully !');
     }
 
@@ -175,7 +175,7 @@ class WorkProgressController extends Controller
         $workProgress->upload_file = store_upload($request->file, 'Work-Progress') ?? $workProgress->upload_file;
         $workProgress->description = $request->description;
         $workProgress->save();
-        LogActivity::addToLog('Update Work Progress','Work Progress',$request->work_id);
+        LogActivity::addToLog('Update Work Progress','Work Progress',$workProgress->wp_id,$request->work_id);
         return redirect()->route('work-progress.index')->with('success', 'Work-Progress Updated Successfully !');
     }
 

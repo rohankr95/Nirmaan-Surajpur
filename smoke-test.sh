@@ -130,14 +130,42 @@ DISTINCT=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(DISTINCT upload_file) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
 check "rapid uploads got distinct filenames" "$DISTINCT" "2"
 
-# A file that claims to be an image but will not decode must not 500.
+# A file that claims to be an image but will not decode must not 500. Posted to
+# work-progress rather than a sanction: the sanctions carry a `mimes` rule that
+# rejects it before it ever reaches the upload path, so it would prove nothing.
 printf 'not really a png' > "$TMP/corrupt.png"
-TOKEN=$(csrf "$TS_FORM")
-CODE=$(post_code "$BASE/technical-sanction" \
-  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "ts_no=TS-C" \
-  -F "submission_date=2026-05-01" -F "ts_amount=300000" -F "work_status=3" \
+BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
+TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID")
+CODE=$(post_code "$BASE/work-progress" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=2" -F "work_status=9" \
+  -F "description=corrupt upload" \
   -F "file=@$TMP/corrupt.png;type=image/png")
 check "undecodable image does not crash the save" "$CODE" "302"
+AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
+check "record still saved despite bad image" "$AFTER" "$((BEFORE + 1))"
+
+# --- per-work audit trail ------------------------------------------------
+TRAIL=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM log_activities WHERE work_id=$WORK_ID" 2>/dev/null)
+if [ "$TRAIL" -ge 4 ]; then ok "work has an audit trail ($TRAIL entries)"
+else bad "expected several audit entries for work $WORK_ID, got $TRAIL"; fi
+
+ORPHAN=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM log_activities WHERE subject_type='Work' AND subject_id IS NULL" 2>/dev/null)
+check "work entries carry a subject_id" "$ORPHAN" "0"
+
+# The trail must cover actions taken on the work's related records, not just
+# the work row itself.
+KINDS=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(DISTINCT subject_type) FROM log_activities WHERE work_id=$WORK_ID" 2>/dev/null)
+if [ "$KINDS" -ge 3 ]; then ok "trail spans $KINDS record types"
+else bad "expected the trail to span several record types, got $KINDS"; fi
+
+curl -s -b "$JAR" -o "$TMP/detail.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "पूर्ववृत्त जानकारी" "$TMP/detail.html"; then ok "history panel renders on work detail"
+else bad "history panel missing from work detail"; fi
+if grep -q "नया कार्य जोड़ा गया" "$TMP/detail.html"; then ok "trail entries render in Hindi"
+else bad "expected a Hindi trail entry on the detail page"; fi
 
 # --- employee provisioning must not reuse a shared password --------------
 EMAIL="smoke$(date +%s)@nirmaan.test"

@@ -76,7 +76,7 @@ class TenderController extends Controller
         $tender->remark = $request->remark;
         $tender->save();
         $work  = Work::where('work_id', $request->work_id)->update(['work_status' => $request->work_status,    'tender_id' => $tender->tender_id]);
-        LogActivity::addToLog('Saved Tender', 'Tender', $tender->tender_id);
+        LogActivity::addToLog('Saved Tender', 'Tender', $tender->tender_id, $request->work_id);
         return redirect()->route('tender.index')->with('success', 'Tender Added Successfully !');
     }
 
@@ -135,7 +135,7 @@ class TenderController extends Controller
         $tender->remark = $request->remark;
         $tender->save();
         $work  = Work::where('work_id', $request->work_id)->update(['work_status' => $request->work_status,    'tender_id' => $tender->tender_id]);
-        LogActivity::addToLog('Updated Tender', 'Tender', $tender->tender_id);
+        LogActivity::addToLog('Updated Tender', 'Tender', $tender->tender_id, $request->work_id);
         return redirect()->route('tender.index')->with('success', 'Tender Updated Successfully !');
     }
 

@@ -76,7 +76,7 @@ class TechnicalSanctionController extends Controller
         $ts->remark = $request->remark;
         $ts->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'ts_id'=>$ts->ts_id]);
-        LogActivity::addToLog('Saved TS','TS',$ts->ts_id);
+        LogActivity::addToLog('Saved TS','TS',$ts->ts_id,$request->work_id);
         return redirect()->route('technical-sanction.index')->with('success', 'TS Added Successfully !');
     }
 
@@ -142,7 +142,7 @@ class TechnicalSanctionController extends Controller
         {
             $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'ts_id'=>$technicalSanction->ts_id]);
         }
-        LogActivity::addToLog('Updated TS','TS',$technicalSanction->ts_id);
+        LogActivity::addToLog('Updated TS','TS',$technicalSanction->ts_id,$request->work_id);
         return redirect()->route('technical-sanction.index')->with('success', 'TS Added Successfully !');
     }
 

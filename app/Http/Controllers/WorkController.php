@@ -166,7 +166,7 @@ class WorkController extends Controller
         $work->workStart_startDate = $request->workStart_startDate;
         $work->workComplete_endDate = $request->workComplete_endDate;
         $work->save();
-        LogActivity::addToLog('Saved Work','Work',$work->work_id);
+        LogActivity::addToLog('Saved Work','Work',$work->work_id,$work->work_id);
         return redirect()->route('work.index')->with('success','Work Added Successfully !');
 
     }
@@ -261,7 +261,7 @@ class WorkController extends Controller
         $work->workStart_startDate = $request->workStart_startDate;
         $work->workComplete_endDate = $request->workComplete_endDate;
         $work->save();
-        LogActivity::addToLog('Updated Work','Work',$work->id);
+        LogActivity::addToLog('Updated Work','Work',$work->work_id,$work->work_id);
         return redirect()->route('work.index')->with('success','Work Updated Successfully !');
     }
 
@@ -276,7 +276,7 @@ class WorkController extends Controller
         $work->deleted_by = session()->get('user_id');
         $work->save();
         $work->delete();
-        LogActivity::addToLog('Deleted Work','Work',$work->work_id);
+        LogActivity::addToLog('Deleted Work','Work',$work->work_id,$work->work_id);
         return redirect()->route('work.index')->with('success','Work Deleted Successfully !');
     }
 }
