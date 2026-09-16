@@ -9,6 +9,7 @@ use App\Models\FinancialYear;
 use App\Models\Office;
 use App\Models\TechnicalSanction;
 use App\Models\Work;
+use App\Models\WorkPayment;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -36,6 +37,16 @@ class DashboardController extends Controller
             $temp_data[$status->work_status_id] = $tempBuilder->where('work_status',$status->work_status_id)->count();
         }
         $status_data = $temp_data;
+
+        // Financial position across the same set of works this user can see.
+        $scopedWorkIds = (clone $workBuilder)->select('work_id');
+
+        $finance = [
+            'sanctioned' => (float) (clone $workBuilder)->sum('sanction_amount'),
+            'released'   => (float) WorkPayment::whereIn('work_id', $scopedWorkIds)->ofType('released')->sum('amount'),
+            'spent'      => (float) WorkPayment::whereIn('work_id', $scopedWorkIds)->ofType('expenditure')->sum('amount'),
+        ];
+        $finance['unreleased'] = $finance['sanctioned'] - $finance['released'];
 
 
         //Fetching Financial Year Data
@@ -148,7 +159,7 @@ class DashboardController extends Controller
              }
              $city->work_stage_data = $temp_data;
          }
-        return view('dashboard.dashboard', compact('financial_years_data','block_data','office_data','status_total_works','status_data','city_data'));
+        return view('dashboard.dashboard', compact('financial_years_data','block_data','office_data','status_total_works','status_data','city_data','finance'));
     }
     public function work_progress_ts(Request $request)
     {

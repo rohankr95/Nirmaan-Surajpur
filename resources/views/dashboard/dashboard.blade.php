@@ -43,6 +43,55 @@
                     </div>
                 </div>
             @endforeach
+
+        </div>
+
+        @php
+            // Government reporting reads these in crore; the rupee figure stays
+            // underneath so the exact number is never lost.
+            $inCrore = fn ($amount) => number_format($amount / 10000000, 2);
+        @endphp
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-bd">
+                    <div class="panel-heading"><div class="panel-title"><h4>वित्तीय स्थिति</h4></div></div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-6 col-md-3">
+                                <div class="statistic-box text-center">
+                                    <h3 class="m-0">{{ $inCrore($finance['sanctioned']) }}</h3>
+                                    <div class="small">कुल स्वीकृत राशि (करोड़ में)</div>
+                                    <small class="text-muted">₹ {{ number_format($finance['sanctioned'], 2) }}</small>
+                                </div>
+                            </div>
+                            <div class="col-xs-6 col-md-3">
+                                <div class="statistic-box text-center">
+                                    <h3 class="m-0 text-success">{{ $inCrore($finance['released']) }}</h3>
+                                    <div class="small">जारी राशि (करोड़ में)</div>
+                                    <small class="text-muted">₹ {{ number_format($finance['released'], 2) }}</small>
+                                </div>
+                            </div>
+                            <div class="col-xs-6 col-md-3">
+                                <div class="statistic-box text-center">
+                                    <h3 class="m-0 text-danger">{{ $inCrore($finance['spent']) }}</h3>
+                                    <div class="small">व्यय राशि (करोड़ में)</div>
+                                    <small class="text-muted">₹ {{ number_format($finance['spent'], 2) }}</small>
+                                </div>
+                            </div>
+                            <div class="col-xs-6 col-md-3">
+                                <div class="statistic-box text-center">
+                                    <h3 class="m-0">{{ $inCrore($finance['unreleased']) }}</h3>
+                                    <div class="small">शेष स्वीकृत राशि (करोड़ में)</div>
+                                    <small class="text-muted">₹ {{ number_format($finance['unreleased'], 2) }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
         </div>
 
         <div class="row m-t-20">

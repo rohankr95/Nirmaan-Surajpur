@@ -322,6 +322,26 @@ PAYLOG=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(*) FROM log_activities WHERE work_id=$WORK_ID AND subject_type='Payment'" 2>/dev/null)
 check "payments appear in the work audit trail" "$PAYLOG" "4"
 
+# --- dashboard financial roll-up -----------------------------------------
+curl -s -b "$JAR" -o "$TMP/dash2.html" "$BASE/dashboard"
+if grep -q "वित्तीय स्थिति" "$TMP/dash2.html"; then ok "financial panel on the dashboard"
+else bad "financial panel missing from dashboard"; fi
+# Totals must come from the ledger, not from a stored figure: the released
+# total should reflect both instalments recorded above.
+if grep -q "600,000.00" "$TMP/dash2.html"; then ok "released total rolled up on the dashboard"
+else bad "dashboard released total does not match the ledger"; fi
+
+# An employee sees only their own works, so their roll-up must not include
+# money from works assigned to someone else.
+EJAR=$(mktemp)
+ETOK=$(curl -s -c "$EJAR" -b "$EJAR" "$BASE/login" | grep -o 'name="_token" value="[^"]*"' | head -1 | sed -E 's/.*value="([^"]*)"/\1/')
+curl -s -b "$EJAR" -c "$EJAR" -X POST "$BASE/authenticate" \
+  -d "_token=$ETOK" -d "login_id=engineer" -d "password=engineer123" -o /dev/null
+curl -s -b "$EJAR" -o "$TMP/edash.html" "$BASE/dashboard"
+if grep -q "वित्तीय स्थिति" "$TMP/edash.html"; then ok "employee dashboard renders its own roll-up"
+else bad "employee dashboard failed to render"; fi
+rm -f "$EJAR"
+
 # --- tender save, including the work order date --------------------------
 # The tender form always posts to store(): edit() never passes $tender to the
 # view, so isset($tender) is false and update() is unreachable from the UI.
