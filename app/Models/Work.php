@@ -89,6 +89,14 @@ class Work extends Model
     {
         return $this->hasOne(Agreement::class,'work_id','work_id')->latestOfMany();
     }
+    public function documents()
+    {
+        return $this->hasMany(WorkDocument::class,'work_id','work_id')->orderBy('document_id','desc');
+    }
+    public function hasDocument(string $type): bool
+    {
+        return $this->documents->where('doc_type', $type)->isNotEmpty();
+    }
     public function payments()
     {
         return $this->hasMany(WorkPayment::class,'work_id','work_id');

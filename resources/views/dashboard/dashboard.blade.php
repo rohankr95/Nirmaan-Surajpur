@@ -93,6 +93,9 @@
                                         जियो टैग लंबित: {{ $geo_pending }}
                                     </span>
                                 </a>
+                                <span class="label {{ $doc_pending['uc'] ? 'label-warning' : 'label-success' }}">यूसी अपलोड शेष: {{ $doc_pending['uc'] }}</span>
+                                <span class="label {{ $doc_pending['cc'] ? 'label-warning' : 'label-success' }}">सीसी अपलोड शेष: {{ $doc_pending['cc'] }}</span>
+                                <span class="label {{ $doc_pending['rwh'] ? 'label-warning' : 'label-success' }}">आर.डब्लू.एच अपलोड शेष: {{ $doc_pending['rwh'] }}</span>
                             </div>
                         </div>
                     </div>

@@ -221,6 +221,44 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- certificates and supporting documents -------------------------------
+curl -s -b "$JAR" -o "$TMP/docs.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "प्रमाण पत्र एवं दस्तावेज़" "$TMP/docs.html"; then ok "documents panel renders"
+else bad "documents panel missing"; fi
+
+upload_doc() { # upload_doc <type> <file>
+  local t; t=$(csrf "$BASE/reports/work-details/$WORK_ID")
+  post_code "$BASE/work-documents" -F "_token=$t" -F "work_id=$WORK_ID" \
+    -F "doc_type=$1" -F "reference_no=REF-$1" -F "document_date=2026-09-16" \
+    -F "file=@$2"
+}
+
+CODE=$(upload_doc cc "$TMP/photo.png")
+check "upload a completion certificate" "$CODE" "302"
+CODE=$(upload_doc uc "$TMP/doc.pdf")
+check "upload a utilisation certificate as PDF" "$CODE" "302"
+
+DOCS=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_documents WHERE work_id=$WORK_ID AND doc_type IN ('cc','uc')" 2>/dev/null)
+check "both certificates stored" "$DOCS" "2"
+
+curl -s -b "$JAR" -o "$TMP/docs2.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "REF-cc" "$TMP/docs2.html"; then ok "certificate reference shown on the work"
+else bad "certificate reference not shown"; fi
+
+# An unsupported file type must be refused rather than stored.
+printf 'binary junk' > "$TMP/bad.exe"
+CODE=$(upload_doc other "$TMP/bad.exe")
+check "unsupported document type is rejected" "$CODE" "302"
+BAD=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_documents WHERE file_path LIKE '%.exe'" 2>/dev/null)
+check "rejected document not stored" "$BAD" "0"
+
+# The dashboard counts certificates outstanding on completed works only.
+curl -s -b "$JAR" -o "$TMP/dash4.html" "$BASE/dashboard"
+if grep -q "सीसी अपलोड शेष" "$TMP/dash4.html"; then ok "certificate pending counters on the dashboard"
+else bad "certificate pending counters missing"; fi
+
 # --- geo-tagging and maps ------------------------------------------------
 COORDS=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT CONCAT(latitude,',',longitude) FROM works WHERE work_id=$WORK_ID" 2>/dev/null)

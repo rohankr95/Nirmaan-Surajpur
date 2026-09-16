@@ -244,6 +244,10 @@
             @endif
 
             <div class="col-lg-12">
+                @include('reports.works._documents',['work'=>$work])
+            </div>
+
+            <div class="col-lg-12">
                 @include('reports.works._photo_gallery',['work'=>$work])
             </div>
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\WorkDocumentController;
 use App\Http\Controllers\Master;
 use App\Http\Controllers\Master\CityController;
 use App\Http\Controllers\Reports;
@@ -68,6 +69,10 @@ Route::middleware([IsLoggedIn::class])->group(function () {
     Route::post('payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('payments/history', [PaymentController::class, 'history'])->name('payments.history');
     Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+    // Certificates and supporting documents attached to a work
+    Route::post('work-documents', [WorkDocumentController::class, 'store'])->name('work-documents.store');
+    Route::delete('work-documents/{document}', [WorkDocumentController::class, 'destroy'])->name('work-documents.destroy');
 
     // Used for work crud
     Route::resource('work', WorkController::class);
