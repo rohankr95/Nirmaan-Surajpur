@@ -99,6 +99,63 @@ class Reports extends Controller
             ->get();
         return view('reports.works.work_detail',compact('work','activity'));
     }
+    /**
+     * Every geo-tagged work the caller may see, plotted on one map.
+     */
+    public function work_map(Request $request)
+    {
+        $builder = Work::query()->with(['status']);
+
+        if (is_officer()) {
+            $builder->where('office_id', session()->get('office_id'));
+        }
+        if (is_emp()) {
+            $builder->where('employee_id', session()->get('emp_id'));
+        }
+        if ($request->filled('financial_year')) {
+            $builder->where('financial_year_id', $request->financial_year);
+        }
+        if ($request->filled('status')) {
+            $builder->where('work_status', $request->status);
+        }
+
+        $untagged = (clone $builder)->whereNull('latitude')->count();
+
+        $mapped = (clone $builder)
+            ->whereNotNull('latitude')->whereNotNull('longitude')
+            ->get()
+            ->map(function ($work) {
+                return [
+                    'lat' => (float) $work->latitude,
+                    'lng' => (float) $work->longitude,
+                    'name' => $work->work_name,
+                    'status' => $work->status->work_status_name ?? '',
+                    'colour' => $this->statusColour($work->work_status),
+                    'url' => route('reports.work-details', $work->work_id),
+                ];
+            })
+            ->values();
+
+        return view('reports.works.map', compact('mapped', 'untagged', 'request'));
+    }
+
+    /**
+     * Marker colour by lifecycle position: complete, running, stopped, other.
+     */
+    private function statusColour($status)
+    {
+        if ($status == 10) {
+            return '#2e7d32';
+        }
+        if (in_array($status, [8, 9])) {
+            return '#f9a825';
+        }
+        if (in_array($status, [11, 12])) {
+            return '#c62828';
+        }
+        return '#1565c0';
+    }
+
     public function work_dossier($work)
     {
         $work = Work::findOrFail($work);

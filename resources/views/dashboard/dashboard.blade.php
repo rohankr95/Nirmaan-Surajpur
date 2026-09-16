@@ -86,6 +86,15 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row" style="margin-top:14px">
+                            <div class="col-xs-12">
+                                <a href="{{ route('reports.work-map') }}">
+                                    <span class="label {{ $geo_pending ? 'label-warning' : 'label-success' }}">
+                                        जियो टैग लंबित: {{ $geo_pending }}
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

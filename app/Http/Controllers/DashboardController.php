@@ -48,6 +48,8 @@ class DashboardController extends Controller
         ];
         $finance['unreleased'] = $finance['sanctioned'] - $finance['released'];
 
+        $geo_pending = (clone $workBuilder)->whereNull('latitude')->count();
+
 
         //Fetching Financial Year Data
         $financial_years_data = FinancialYear::all();
@@ -159,7 +161,7 @@ class DashboardController extends Controller
              }
              $city->work_stage_data = $temp_data;
          }
-        return view('dashboard.dashboard', compact('financial_years_data','block_data','office_data','status_total_works','status_data','city_data','finance'));
+        return view('dashboard.dashboard', compact('financial_years_data','block_data','office_data','status_total_works','status_data','city_data','finance','geo_pending'));
     }
     public function work_progress_ts(Request $request)
     {

@@ -42,6 +42,9 @@
             <li class="{{echo_active(request()->route()->getName()=='work-progress.index')}}">
                 <a href="{{ route('work-progress.index') }}"><i class="ti-bar-chart"></i> <span>कार्य प्रगति </span></a>
             </li>
+            <li class="{{echo_active(request()->route()->getName()=='reports.work-map')}}">
+                <a href="{{ route('reports.work-map') }}"><i class="ti-map-alt"></i> <span>कार्य मानचित्र</span></a>
+            </li>
             <li class="{{echo_active(request()->route()->getName()=='payments.index')}}">
                 <a href="{{ route('payments.index') }}"><i class="ti-wallet"></i> <span>कार्य भुगतान सूची</span></a>
             </li>

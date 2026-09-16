@@ -188,6 +188,22 @@
                         value="{{ isset($work) ? $work->sanction_amount : '' }}">
                 </div>
                 <div class="col-sm-3">
+                    <label for="latitude" class="col-form-label">अक्षांश (Latitude)</label>
+                    <input class="form-control" type="number" step="0.0000001" min="-90" max="90" id="latitude"
+                        name="latitude" placeholder="जैसे 23.2156789"
+                        value="{{ isset($work) ? $work->latitude : '' }}">
+                </div>
+                <div class="col-sm-3">
+                    <label for="longitude" class="col-form-label">देशान्तर (Longitude)</label>
+                    <input class="form-control" type="number" step="0.0000001" min="-180" max="180" id="longitude"
+                        name="longitude" placeholder="जैसे 82.8712345"
+                        value="{{ isset($work) ? $work->longitude : '' }}">
+                    <button type="button" class="btn btn-xs btn-default" style="margin-top:4px" onclick="fillCurrentLocation()">
+                        <i class="fa fa-crosshairs"></i> वर्तमान स्थान लें
+                    </button>
+                    <span id="geo-status" class="small text-muted"></span>
+                </div>
+                <div class="col-sm-3">
                     <label for="work_name" class="col-form-label">कार्य नाम <span
                             style="color: red">&nbsp;*</span></label>
                     <input class="form-control" type="text" placeholder="कार्य नाम" id="work_name"

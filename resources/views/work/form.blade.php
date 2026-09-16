@@ -40,5 +40,23 @@
            $('#village').prop('required',$('#location_type').val()==1);
         }
 
+        // Browsers only expose geolocation over HTTPS or on localhost, so this
+        // reports plainly rather than failing silently on an http deployment.
+        function fillCurrentLocation() {
+            var status = document.getElementById('geo-status');
+            if (!navigator.geolocation) {
+                status.textContent = 'इस ब्राउज़र में स्थान उपलब्ध नहीं है';
+                return;
+            }
+            status.textContent = 'स्थान लिया जा रहा है…';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('latitude').value = pos.coords.latitude.toFixed(7);
+                document.getElementById('longitude').value = pos.coords.longitude.toFixed(7);
+                status.textContent = 'स्थान दर्ज किया गया';
+            }, function () {
+                status.textContent = 'स्थान प्राप्त नहीं हो सका';
+            });
+        }
+
     </script>
 @endsection

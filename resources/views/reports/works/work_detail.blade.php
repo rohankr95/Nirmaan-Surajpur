@@ -248,6 +248,10 @@
             </div>
 
             <div class="col-lg-12">
+                @include('reports.works._location_map',['work'=>$work])
+            </div>
+
+            <div class="col-lg-12">
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <div class="panel-title text-center">

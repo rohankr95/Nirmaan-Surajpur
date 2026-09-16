@@ -10,7 +10,7 @@ use PhpParser\Node\Expr\FuncCall;
 class Work extends Model
 {
     use HasFactory,SoftDeletes;
-    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','ward_id','financial_year_id','employee_id','sdo_emp_id','sanction_amount'];
+    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','ward_id','financial_year_id','employee_id','sdo_emp_id','sanction_amount','latitude','longitude'];
     protected $primaryKey = 'work_id';
 
     public function work_type()

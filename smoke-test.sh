@@ -57,6 +57,7 @@ CODE=$(post_code "$BASE/work" \
   -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
   -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" -d "sdo_emp_id=2" \
   -d "unit_work=1" -d "sanction_amount=1000000" \
+  -d "latitude=23.2156789" -d "longitude=82.8712345" \
   -d "dpr_startDate=2026-04-01" -d "dpr_endDate=2026-04-30" \
   -d "workComplete_endDate=2027-03-31")
 check "create work" "$CODE" "302"
@@ -219,6 +220,29 @@ else bad "SDO mobile not shown on work detail"; fi
 curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
+
+# --- geo-tagging and maps ------------------------------------------------
+COORDS=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT CONCAT(latitude,',',longitude) FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+check "coordinates stored on the work" "$COORDS" "23.2156789,82.8712345"
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/map.html" -w '%{http_code}' "$BASE/reports/work-map")
+check "work map page loads" "$CODE" "200"
+if grep -q "23.2156789" "$TMP/map.html"; then ok "geo-tagged work passed to the map"
+else bad "work missing from the map payload"; fi
+# Leaflet is vendored locally so the map works without internet access.
+if grep -q "assets/leaflet/leaflet.js" "$TMP/map.html"; then ok "map uses the locally vendored Leaflet"
+else bad "map is not loading local Leaflet"; fi
+if [ -f public/assets/leaflet/leaflet.js ]; then ok "Leaflet asset present in public/"
+else bad "Leaflet asset missing from public/"; fi
+
+curl -s -b "$JAR" -o "$TMP/detail3.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "work-location-map" "$TMP/detail3.html"; then ok "location map on the work detail"
+else bad "location map missing from work detail"; fi
+
+curl -s -b "$JAR" -o "$TMP/dash3.html" "$BASE/dashboard"
+if grep -q "जियो टैग लंबित" "$TMP/dash3.html"; then ok "geo-tag pending counter on the dashboard"
+else bad "geo-tag pending counter missing"; fi
 
 # --- contractor master and work order ------------------------------------
 CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/contractor")

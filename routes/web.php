@@ -107,6 +107,7 @@ Route::middleware([IsLoggedIn::class])->group(function () {
         Route::get("works",[Reports::class,'work_list'])->name('reports.works');
         Route::get("work-details/{id}",[Reports::class,'work_details'])->name('reports.work-details');
         Route::get("work-dossier/{id}",[Reports::class,'work_dossier'])->name('reports.work-dossier');
+        Route::get("work-map",[Reports::class,'work_map'])->name('reports.work-map');
         Route::get("ts-view/{id}",[Reports::class,'ts_view'])->name('reports.ts-view');
         Route::get("as-view/{id}",[Reports::class,'as_view'])->name('reports.as-view');
         Route::get("progress-view/{id}",[Reports::class,'progress_view'])->name('reports.progress-view');
