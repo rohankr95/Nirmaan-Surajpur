@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 
 class Employee extends Model
@@ -24,13 +25,26 @@ class Employee extends Model
         return $this->belongsTo(EmployeeDesignation::class,'emp_designation_id','designation_id');
     }
 
+    /**
+     * Plain-text password generated for the auto-provisioned login, readable
+     * only on the instance that created it so it can be shown to the admin once.
+     */
+    public $generatedPassword;
+
     protected static function boot()
     {
         parent::boot();
         static::created(function ($employee) {
+            if (empty($employee->emp_email)) {
+                return;
+            }
+
+            $employee->generatedPassword = Str::random(12);
+
             User::create([
                 'login_id' => $employee->emp_email,
-                'password' => '$2y$10$V0wbuecslzZjCrjtyZ7tm.ehxkya7uhm61iB12rMxM93.A34oZB6i',
+                'password' => Hash::make($employee->generatedPassword),
+                'force_password_reset' => true,
                 'name' => $employee->emp_name,
                 'designation' => $employee->emp_designation_id,
                 'landline' => 'N/A',

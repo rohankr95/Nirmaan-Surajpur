@@ -7,7 +7,6 @@ use App\Models\Work;
 use App\Models\WorkComplete;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Nette\Utils\Image;
 
 
 class WorkCompleteController extends Controller
@@ -50,21 +49,7 @@ class WorkCompleteController extends Controller
         }
         $complete = new WorkComplete();
         $complete->completion_date = $request->work_completion_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Complete/', $name);
-                $complete->upload_file = 'images/Work-Complete/' . $name;
-                $image = Image::fromFile(public_path('images/Work-Complete/' . $name));
-                $image->save(public_path('images/Work-Complete/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Complete/', $name);
-                $complete->upload_file = 'images/Work-Complete/' . $name;
-            }
-        }
+        $complete->upload_file = store_upload($request->file, 'Work-Complete') ?? $complete->upload_file;
         $complete->remark = $request->remark;
         $complete->work_id = $request->work_id;
         $complete->save();

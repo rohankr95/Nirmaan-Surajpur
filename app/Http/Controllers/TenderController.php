@@ -8,7 +8,6 @@ use App\Models\Work;
 use App\Models\WorkStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Nette\Utils\Image;
 
 class TenderController extends Controller
 {
@@ -72,21 +71,7 @@ class TenderController extends Controller
         $tender->tender_release_date = $request->tender_release_date;
         $tender->tender_opening_date = $request->tender_opening_date;
         // $tender->work_order_date = $request->work_order_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Tender/', $name);
-                $tender->upload_file = 'images/Tender/' . $name;
-                $image123 = Image::fromFile(public_path('images/Tender/' . $name));
-                $image123->save(public_path('images/Tender/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Tender/', $name);
-                $tender->upload_file = 'images/Tender/' . $name;
-            }
-        }
+        $tender->upload_file = store_upload($request->file, 'Tender') ?? $tender->upload_file;
 
         $tender->remark = $request->remark;
         $tender->save();
@@ -146,21 +131,7 @@ class TenderController extends Controller
         $tender->tender_release_date = $request->tender_release_date;
         $tender->tender_opening_date = $request->tender_opening_date;
         $tender->work_order_date = $request->work_order_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Tender/', $name);
-                $tender->upload_file = 'images/Tender/' . $name;
-                $image123 = Image::fromFile(public_path('images/Tender/' . $name));
-                $image123->save(public_path('images/Tender/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Tender/', $name);
-                $tender->upload_file = 'images/Tender/' . $name;
-            }
-        }
+        $tender->upload_file = store_upload($request->file, 'Tender') ?? $tender->upload_file;
         $tender->remark = $request->remark;
         $tender->save();
         $work  = Work::where('work_id', $request->work_id)->update(['work_status' => $request->work_status,    'tender_id' => $tender->tender_id]);

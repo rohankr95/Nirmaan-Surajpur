@@ -158,12 +158,7 @@ class DashboardController extends Controller
         $ts->submission_date = $request->submission_date;
         $ts->ts_amount = $request->ts_amount;
         $ts->approval_date = $request->approval_date;
-        if ($request->Upload_file != '' && $request->Upload_file != null) {
-            $files = $request->Upload_file;
-            $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-            $files->move('images/Ts/', $name);
-            $ts->upload_file = 'images/Ts/' . $name;
-        }
+        $ts->upload_file = store_upload($request->Upload_file, 'Ts') ?? $ts->upload_file;
         $ts->remark = $request->remark;
         $ts->save();
         $work  = Work::where('work_id',$request->work_idd)->update(['work_status'=>3,'ts_id'=>$ts->ts_id]);

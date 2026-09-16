@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('work_progress', function (Blueprint $table) {
             $table->id('wp_id');
-            $table->date('estimated_completion_date');
+            $table->date('estimated_completion_date')->nullable();
             $table->integer('work_status_id');
             $table->integer('mb_stages_id');
             $table->double('expenditure_amount')->nullable();
-            $table->string('file')->nullable();
+            $table->string('upload_file')->nullable();
             $table->date('status_update_date');
             $table->string('description')->nullable();
             $table->unsignedBigInteger('work_id');

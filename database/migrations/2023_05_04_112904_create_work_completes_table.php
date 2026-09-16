@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('work_completes', function (Blueprint $table) {
             $table->id();
             $table->date('completion_date');
+            $table->string('upload_file')->nullable();
             $table->string('remark')->nullable();
             $table->unsignedBigInteger('work_id')->index();
             $table->foreign('work_id')->references('work_id')->on('works')->onDelete('cascade');

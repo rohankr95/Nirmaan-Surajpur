@@ -9,7 +9,6 @@ use App\Models\WorkStatus;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator as FacadesValidator;
-use Nette\Utils\Image;
 
 class TechnicalSanctionController extends Controller
 {
@@ -73,21 +72,7 @@ class TechnicalSanctionController extends Controller
         $ts->submission_date = $request->submission_date;
         $ts->ts_amount = $request->ts_amount;
         $ts->approval_date = $request->approval_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Ts/', $name);
-            $ts->upload_file = 'images/Ts/' . $name;
-                $image123 = Image::fromFile(public_path('images/Ts/' . $name));
-                $image123->save(public_path('images/Ts/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Ts/', $name);
-                $ts->upload_file = 'images/Ts/' . $name;
-            }
-        }
+        $ts->upload_file = store_upload($request->file, 'Ts') ?? $ts->upload_file;
         $ts->remark = $request->remark;
         $ts->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'ts_id'=>$ts->ts_id]);
@@ -145,21 +130,7 @@ class TechnicalSanctionController extends Controller
         $technicalSanction->submission_date = $request->submission_date;
         $technicalSanction->ts_amount = $request->ts_amount;
         $technicalSanction->approval_date = $request->approval_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Ts/', $name);
-            $technicalSanction->upload_file = 'images/Ts/' . $name;
-                $image123 = Image::fromFile(public_path('images/Ts/' . $name));
-                $image123->save(public_path('images/Ts/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Ts/', $name);
-                $technicalSanction->upload_file = 'images/Ts/' . $name;
-            }
-        }
+        $technicalSanction->upload_file = store_upload($request->file, 'Ts') ?? $technicalSanction->upload_file;
         $technicalSanction->remark = $request->remark;
         $technicalSanction->save();
         $value = Work::where('work_id',$request->work_id)->first('tenderChecked');

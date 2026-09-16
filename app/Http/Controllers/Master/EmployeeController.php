@@ -71,6 +71,13 @@ class EmployeeController extends Controller
         $Employee->office_id = $office;
         $Employee->status = 1;
         $Employee->save();
+
+        if ($Employee->generatedPassword) {
+            return back()->with('success', 'कर्मचारी जोड़ा गया। लॉगिन आईडी: '.$Employee->emp_email
+                .' — अस्थायी पासवर्ड: '.$Employee->generatedPassword
+                .' (यह पासवर्ड दोबारा नहीं दिखाया जाएगा; पहली बार लॉगिन पर बदलना अनिवार्य होगा।)');
+        }
+
         return back()->with('success','Added Employee Successfully !');
 
     }

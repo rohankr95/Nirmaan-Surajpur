@@ -14,7 +14,6 @@ use App\Models\WorkType;
 use App\Models\WorkTypeStage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Nette\Utils\Image;
 
 class WorkProgressController extends Controller
 {
@@ -114,21 +113,7 @@ class WorkProgressController extends Controller
         $workProgress->mb_stages_id = $request->mb_stages;
         $workProgress->expenditure_amount = $request->expenditure_amount;
         $workProgress->status_update_date = date('Y-m-d');
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Progress/', $name);
-            $workProgress->upload_file = 'images/Work-Progress/' . $name;
-                $image123 = Image::fromFile(public_path('images/Work-Progress/' . $name));
-                $image123->save(public_path('images/Work-Progress/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Progress/', $name);
-                $workProgress->upload_file = 'images/Work-Progress/' . $name;
-            }
-        }
+        $workProgress->upload_file = store_upload($request->file, 'Work-Progress') ?? $workProgress->upload_file;
         $workProgress->description = $request->description;
         $workProgress->save();
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>9, 'work_stage'=>$request->mb_stages]);
@@ -187,21 +172,7 @@ class WorkProgressController extends Controller
         $workProgress->mb_stages_id = $request->mb_stages;
         $workProgress->expenditure_amount = $request->expenditure_amount;
         $workProgress->status_update_date = $request->status_update_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Progress/', $name);
-            $workProgress->upload_file = 'images/Work-Progress/' . $name;
-                $image123 = Image::fromFile(public_path('images/Work-Progress/' . $name));
-                $image123->save(public_path('images/Work-Progress/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/Work-Progress/', $name);
-                $workProgress->upload_file = 'images/Work-Progress/' . $name;
-            }
-        }
+        $workProgress->upload_file = store_upload($request->file, 'Work-Progress') ?? $workProgress->upload_file;
         $workProgress->description = $request->description;
         $workProgress->save();
         LogActivity::addToLog('Update Work Progress','Work Progress',$request->work_id);

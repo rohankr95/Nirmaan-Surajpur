@@ -8,7 +8,6 @@ use App\Models\Block;
 use App\Models\City;
 use App\Models\Department;
 use App\Models\Employee;
-use App\Models\Engineer;
 use App\Models\FinancialYear;
 use App\Models\Grampanchayat;
 use App\Models\LocationType;
@@ -146,10 +145,7 @@ class WorkController extends Controller
         $work->department_id = $request->dp;
         $work->location_type_id = $request->location_type;
         $work->village_id = $request->village;
-//        $work->grampanchayat_id = $request->gp;
-//        $work->block_id = $request->block;
         $work->ward_id = $request->ward;
-//        $work->city_id = $request->city;
         $work->financial_year_id = $request->fy;
         $work->employee_id = $eng_id??0;
         $work->work_status = 1; // 1 fo aprambh
@@ -245,10 +241,7 @@ class WorkController extends Controller
         $work->department_id = $request->dp;
         $work->location_type_id = $request->location_type;
         $work->village_id = $request->village;
-//        $work->grampanchayat_id = $request->gp;
-//        $work->block_id = $request->block;
         $work->ward_id = $request->ward;
-//        $work->city_id = $request->city;
         $work->financial_year_id = $request->fy;
         $work->employee_id = $eng_id;
         $work->updated_by = session()->get('user_id');

@@ -9,7 +9,6 @@ use App\Models\Work;
 use App\Models\WorkStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Nette\Utils\Image;
 
 class AdministrativeSanctionController extends Controller
 {
@@ -74,21 +73,7 @@ class AdministrativeSanctionController extends Controller
         $as->submission_date = $request->as_submission_Date;
         $as->approval_date = $request->as_approval_date;
         $as->as_amount = $request->as_amount;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/As/', $name);
-                $as->upload_file = 'images/As/' . $name;
-                $image123 = Image::fromFile(public_path('images/As/' . $name));
-                $image123->save(public_path('images/As/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/As/', $name);
-                $as->upload_file = 'images/As/' . $name;
-            }
-        }
+        $as->upload_file = store_upload($request->file, 'As') ?? $as->upload_file;
 
         $as->remark = $request->remark;
         $as->save();
@@ -148,21 +133,7 @@ class AdministrativeSanctionController extends Controller
         $administrativeSanction->submission_date = $request->as_submission_Date;
         $administrativeSanction->as_amount = $request->as_amount;
         $administrativeSanction->approval_date = $request->as_approval_date;
-        if ($request->file != '' && $request->file != null) {
-            $files = $request->file;
-            $ext = $files->getClientOriginalExtension();
-            if ($ext == 'jpg' || $ext == 'png' || $ext == 'jpeg' || $ext == 'bmp' ||  $ext == 'gif' || $ext == 'webp') {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/As/', $name);
-            $administrativeSanction->upload_file = 'images/As/' . $name;
-                $image123 = Image::fromFile(public_path('images/As/' . $name));
-                $image123->save(public_path('images/As/' . $name), 20);
-            } else {
-                $name = sha1(time()) . '.' . $files->getClientOriginalExtension();
-                $files->move('images/As/', $name);
-                $administrativeSanction->upload_file = 'images/As/' . $name;
-            }
-        }
+        $administrativeSanction->upload_file = store_upload($request->file, 'As') ?? $administrativeSanction->upload_file;
         $administrativeSanction->remark = $request->remark;
         $administrativeSanction->save();
         $value = Work::where('work_id',$request->work_id)->first('tenderChecked');

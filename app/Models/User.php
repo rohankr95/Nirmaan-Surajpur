@@ -21,6 +21,7 @@ class User extends Authenticatable
     protected $fillable = [
         'login_id',
         'password',
+        'force_password_reset',
         'name', 
         'designation', 
         'landline', 

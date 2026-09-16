@@ -52,7 +52,14 @@ class LoginController extends Controller
                 $request->session()->put('office_id', $user->office_id);
                 $request->session()->put('emp_id', $user->emp_id);
                 $request->session()->put('office', $user->office->office_name??'');
+                $request->session()->put('force_password_reset', (bool) $user->force_password_reset);
                 LogActivity::addToLog('User Login','User',$user->user_id);
+
+                if ($user->force_password_reset) {
+                    return redirect()->route('change-password')
+                        ->with('error', 'जारी रखने के लिए कृपया अपना अस्थायी पासवर्ड बदलें।');
+                }
+
                 return redirect('dashboard')->with('success',"सफलतापूर्वक लॉगिन किया गया");
             } else {
                 return back()->withInput()->with('error', 'असफल : पासवर्ड गलत है !');
@@ -91,9 +98,11 @@ class LoginController extends Controller
             if( $request->new_password == $request->confirm_password)
             {
                 $user->password = Hash::make($request->new_password);
+                $user->force_password_reset = false;
                 $user->save();
-                return redirect('dashboard')->with('success','पासवर्ड बदल दिया गया है');
                 LogActivity::addToLog('User Change Password','User',$user->user_id);
+                session()->put('force_password_reset', false);
+                return redirect('dashboard')->with('success','पासवर्ड बदल दिया गया है');
             }
             else
             {
