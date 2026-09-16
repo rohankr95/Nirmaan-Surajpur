@@ -22,5 +22,8 @@
     "libgd-dev",
     "zlib1g-dev"
   ],
-  "phpExtensions": ["gd"]
+  "phpExtensions": ["gd"],
+  "deploy": {
+    "aptPackages": ["libpq5"]
+  }
 }
