@@ -139,6 +139,62 @@ STATUS=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT work_status FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
 check "work moved to complete status" "$STATUS" "10"
 
+# --- delete icon on individual gallery photos ------------------------------
+# One of the two photos added earlier under stage 1 (a work_progress_images
+# row) must be removable without touching the other, or the entry itself.
+WP1_ID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT wp_id FROM work_progress WHERE work_id=$WORK_ID AND mb_stages_id=1 ORDER BY wp_id DESC LIMIT 1" 2>/dev/null)
+IMG_ID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT wp_image_id FROM work_progress_images WHERE work_progress_id=$WP1_ID ORDER BY wp_image_id LIMIT 1" 2>/dev/null)
+IMG_COUNT_BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress_images WHERE work_progress_id=$WP1_ID" 2>/dev/null)
+TOKEN=$(csrf "$BASE/reports/work-details/$WORK_ID")
+CODE=$(post_code "$BASE/work-progress-images/$IMG_ID" -d "_token=$TOKEN" -d "_method=DELETE")
+check "delete one gallery photo" "$CODE" "302"
+IMG_COUNT_AFTER=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress_images WHERE work_progress_id=$WP1_ID" 2>/dev/null)
+check "only the one photo was removed" "$IMG_COUNT_AFTER" "$((IMG_COUNT_BEFORE - 1))"
+STILL_EXISTS=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress WHERE wp_id=$WP1_ID" 2>/dev/null)
+check "the progress entry itself is untouched" "$STILL_EXISTS" "1"
+
+# A legacy (pre-multi-image) photo stored directly on work_progress.upload_file
+# must also be deletable through the same gallery.
+mysql -ularavel -plaravel nirmaan -e \
+  "UPDATE work_progress SET upload_file='images/Work-Progress/legacy-smoke.png' WHERE wp_id=$WP1_ID" 2>/dev/null
+TOKEN=$(csrf "$BASE/reports/work-details/$WORK_ID")
+CODE=$(post_code "$BASE/work-progress/$WP1_ID/legacy-photo" -d "_token=$TOKEN" -d "_method=DELETE")
+check "delete a legacy single-column photo" "$CODE" "302"
+LEGACY_CLEARED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT upload_file IS NULL FROM work_progress WHERE wp_id=$WP1_ID" 2>/dev/null)
+check "legacy photo column cleared" "$LEGACY_CLEARED" "1"
+
+# --- update/delete the कार्य पूर्ण completion photo -----------------------
+COMPLETE_ID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT id FROM work_completes WHERE work_id=$WORK_ID ORDER BY id DESC LIMIT 1" 2>/dev/null)
+CODE=$(curl -s -b "$JAR" -o "$TMP/completephoto.html" -w '%{http_code}' "$BASE/work-complete-photo/$COMPLETE_ID/edit")
+check "completion photo edit form loads" "$CODE" "200"
+
+# Delete first, then re-add: leaves a photo in place afterwards, since later
+# assertions (further down the script) expect the completion photo to exist.
+TOKEN=$(csrf "$BASE/reports/work-details/$WORK_ID")
+CODE=$(post_code "$BASE/work-complete-photo/$COMPLETE_ID" -d "_token=$TOKEN" -d "_method=DELETE")
+check "completion photo deleted" "$CODE" "302"
+COMPLETION_PHOTO_CLEARED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT upload_file IS NULL FROM work_completes WHERE id=$COMPLETE_ID" 2>/dev/null)
+check "completion photo column cleared" "$COMPLETION_PHOTO_CLEARED" "1"
+STATUS_STILL_COMPLETE=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_status FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+check "deleting the completion photo did not revert work_status" "$STATUS_STILL_COMPLETE" "10"
+
+TOKEN=$(csrf "$BASE/work-complete-photo/$COMPLETE_ID/edit")
+CODE=$(post_code "$BASE/work-complete-photo/$COMPLETE_ID" \
+  -F "_token=$TOKEN" -F "file=@$TMP/photo.png;type=image/png")
+check "completion photo re-added after deletion" "$CODE" "302"
+COMPLETION_DATE_UNCHANGED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_completes WHERE id=$COMPLETE_ID AND completion_date='2026-09-15'" 2>/dev/null)
+check "updating the photo left completion_date untouched" "$COMPLETION_DATE_UNCHANGED" "1"
+
 # --- reports still render ------------------------------------------------
 for path in "reports/works" "reports/block-wise" "reports/scheme-wise" "reports/logs-list"; do
   CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/$path")

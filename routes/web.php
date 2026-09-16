@@ -106,10 +106,15 @@ Route::middleware([IsLoggedIn::class])->group(function () {
     // new status update -- for photos that were never uploaded or were lost.
     Route::get('work-progress-images/create', [WorkProgressController::class, 'galleryUploadForm'])->name('work-progress-images.create');
     Route::post('work-progress-images', [WorkProgressController::class, 'galleryUploadStore'])->name('work-progress-images.store');
+    Route::delete('work-progress-images/{workProgressImage}', [WorkProgressController::class, 'destroyImage'])->name('work-progress-images.destroy');
+    Route::delete('work-progress/{workProgress}/legacy-photo', [WorkProgressController::class, 'destroyLegacyPhoto'])->name('work-progress.destroy-legacy-photo');
 
     // work-completion & rejection routes
     Route::post('work-closed',[WorkClosedController::class,'store'])->name('work-closed');
     Route::post('work-complete',[WorkCompleteController::class,'store'])->name('work-complete');
+    Route::get('work-complete-photo/{workComplete}/edit', [WorkCompleteController::class, 'editPhoto'])->name('work-complete.edit-photo');
+    Route::post('work-complete-photo/{workComplete}', [WorkCompleteController::class, 'updatePhoto'])->name('work-complete.update-photo');
+    Route::delete('work-complete-photo/{workComplete}', [WorkCompleteController::class, 'destroyPhoto'])->name('work-complete.destroy-photo');
     Route::post('work-agreement',[AgreementController::class,'store'])->name('work-agreement');
     Route::post('work-reject',[WorkRejectController::class,'store'])->name('work-reject');
 

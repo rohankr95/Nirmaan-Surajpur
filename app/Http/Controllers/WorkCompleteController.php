@@ -73,6 +73,50 @@ class WorkCompleteController extends Controller
     }
 
     /**
+     * The form for replacing the completion photo -- also used to add one
+     * back if it was deleted, since both are just "set upload_file".
+     */
+    public function editPhoto(WorkComplete $workComplete)
+    {
+        return view('work-complete.update_photo_form', compact('workComplete'))->render();
+    }
+
+    /**
+     * Replaces the completion photo. completion_date/remark/work_status are
+     * left untouched -- this only ever touches the photo.
+     */
+    public function updatePhoto(Request $request, WorkComplete $workComplete)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|mimes:jpeg,jpg,png,gif,webp,pdf',
+        ]);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $workComplete->upload_file = store_upload($request->file, 'Work-Complete') ?? $workComplete->upload_file;
+        $workComplete->save();
+
+        LogActivity::addToLog('Updated Work Completed', 'Work Completed', $workComplete->id, $workComplete->work_id);
+
+        return back()->with('success', 'छायाचित्र अद्यतन किया गया');
+    }
+
+    /**
+     * Clears the completion photo only. The completion record itself (and
+     * the work's completed status) is left alone.
+     */
+    public function destroyPhoto(WorkComplete $workComplete)
+    {
+        $workComplete->upload_file = null;
+        $workComplete->save();
+
+        LogActivity::addToLog('Deleted Photo', 'Work Completed', $workComplete->id, $workComplete->work_id);
+
+        return back()->with('success', 'छायाचित्र हटाया गया');
+    }
+
+    /**
      * Show the form for editing the specified resource.
      *
      * @param  \App\Models\WorkComplete  $workComplete

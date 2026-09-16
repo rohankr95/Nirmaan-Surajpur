@@ -178,6 +178,31 @@ class WorkProgressController extends Controller
     }
 
     /**
+     * Removes one photo from a work_progress_images entry (the multi-file
+     * table). The progress entry itself is left alone even if this empties
+     * it -- only the photo the user asked to remove goes away.
+     */
+    public function destroyImage(WorkProgressImage $workProgressImage)
+    {
+        $workId = $workProgressImage->workProgress->work_id;
+        LogActivity::addToLog('Deleted Photo', 'Work Progress', $workProgressImage->work_progress_id, $workId);
+        $workProgressImage->delete();
+        return back()->with('success', 'छायाचित्र हटाया गया');
+    }
+
+    /**
+     * Clears the single legacy upload_file column on an older progress
+     * entry (from before work_progress_images existed).
+     */
+    public function destroyLegacyPhoto(WorkProgress $workProgress)
+    {
+        $workProgress->upload_file = null;
+        $workProgress->save();
+        LogActivity::addToLog('Deleted Photo', 'Work Progress', $workProgress->wp_id, $workProgress->work_id);
+        return back()->with('success', 'छायाचित्र हटाया गया');
+    }
+
+    /**
      * A status update can carry several photos/bills at once; each becomes
      * its own row so the detail-page gallery can show them all.
      */

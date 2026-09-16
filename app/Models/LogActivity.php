@@ -32,6 +32,8 @@ class LogActivity extends Model
         'Saved Work Progress'  => 'कार्य प्रगति दर्ज की गई',
         'Update Work Progress' => 'कार्य प्रगति अद्यतन की गई',
         'Saved Work Completed' => 'कार्य पूर्ण दर्ज किया गया',
+        'Updated Work Completed' => 'कार्य पूर्ण छायाचित्र अद्यतन किया गया',
+        'Deleted Photo'         => 'छायाचित्र हटाया गया',
         'Saved Work Closed'    => 'कार्य बंद किया गया',
         'Saved Work Rejected'  => 'कार्य निरस्त किया गया',
         'Saved Payment'        => 'भुगतान दर्ज किया गया',
