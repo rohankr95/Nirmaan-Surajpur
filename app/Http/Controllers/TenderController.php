@@ -70,7 +70,7 @@ class TenderController extends Controller
         $tender->tender_no = $request->tender_no;
         $tender->tender_release_date = $request->tender_release_date;
         $tender->tender_opening_date = $request->tender_opening_date;
-        // $tender->work_order_date = $request->work_order_date;
+        $tender->work_order_date = $request->work_order_date;
         $tender->upload_file = store_upload($request->file, 'Tender') ?? $tender->upload_file;
 
         $tender->remark = $request->remark;

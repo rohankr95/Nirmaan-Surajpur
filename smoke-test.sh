@@ -220,6 +220,39 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- tender save, including the work order date --------------------------
+# The tender form always posts to store(): edit() never passes $tender to the
+# view, so isset($tender) is false and update() is unreachable from the UI.
+TOKEN=$(csrf "$BASE/tender/$WORK_ID/edit")
+CODE=$(post_code "$BASE/tender" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-1" \
+  -F "tender_release_date=2026-06-01" -F "tender_opening_date=2026-06-20" \
+  -F "work_order_date=2026-07-01" -F "work_status=6" -F "remark=स्मोक निविदा")
+check "save tender with work order date" "$CODE" "302"
+WOD=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_order_date FROM tenders WHERE tender_no='TND-1'" 2>/dev/null)
+check "work order date persisted" "$WOD" "2026-07-01"
+
+# The same form with the work order date left blank must still save: the column
+# is nullable in production and the field is optional on the form.
+TOKEN=$(csrf "$BASE/tender/$WORK_ID/edit")
+CODE=$(post_code "$BASE/tender" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "tender_no=TND-2" \
+  -F "tender_release_date=2026-06-01" -F "tender_opening_date=2026-06-20" \
+  -F "work_order_date=" -F "work_status=6")
+check "tender saves without a work order date" "$CODE" "302"
+BLANK=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM tenders WHERE tender_no='TND-2'" 2>/dev/null)
+check "tender without work order date stored" "$BLANK" "1"
+
+# Mandatory fields must fail validation rather than reach the database and
+# raise a NOT NULL error. Closing a work with no close date is the cheapest
+# example of the class.
+TOKEN=$(csrf "$BASE/work")
+CODE=$(post_code "$BASE/work-closed" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "close_date=" -F "work_status=11")
+check "blank mandatory date is rejected, not a 500" "$CODE" "302"
+
 # --- printable, signable work dossier ------------------------------------
 CODE=$(curl -s -b "$JAR" -o "$TMP/dossier.html" -w '%{http_code}' "$BASE/reports/work-dossier/$WORK_ID")
 check "work dossier loads" "$CODE" "200"

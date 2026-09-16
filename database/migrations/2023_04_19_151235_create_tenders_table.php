@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('tender_no');
             $table->date('tender_release_date')->nullable();
             $table->date('tender_opening_date');
-            $table->date('work_order_date');
+            $table->date('work_order_date')->nullable();
             $table->string('upload_file')->nullable();
             $table->string('remark')->nullable();
             $table->unsignedBigInteger('work_id')->index();

@@ -40,6 +40,7 @@ class WorkClosedController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'work_id' => 'required',
+            'close_date' => 'required|date',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();

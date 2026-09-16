@@ -42,6 +42,7 @@ class AgreementController extends Controller
          // dd($request->all());
          $validator = Validator::make($request->all(), [
             'work_id' => 'required',
+            'agreement_date' => 'required|date',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();

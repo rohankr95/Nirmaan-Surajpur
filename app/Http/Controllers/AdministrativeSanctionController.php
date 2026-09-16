@@ -61,6 +61,7 @@ class AdministrativeSanctionController extends Controller
             'as_no' => 'required',
             'as_submission_Date' => 'required',
             'as_amount' => 'required',
+            'as_by' => 'required',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -122,6 +123,7 @@ class AdministrativeSanctionController extends Controller
             'as_no' => 'required',
             'as_submission_Date' => 'required',
             'as_amount' => 'required',
+            'as_by' => 'required',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();

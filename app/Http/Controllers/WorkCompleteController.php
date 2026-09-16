@@ -42,6 +42,7 @@ class WorkCompleteController extends Controller
         // dd($request->all());
         $validator = Validator::make($request->all(), [
             'work_id' => 'required',
+            'work_completion_date' => 'required|date',
             'file'=>'required',
         ]);
         if ($validator->fails()) {

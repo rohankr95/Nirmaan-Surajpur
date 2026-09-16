@@ -101,6 +101,7 @@ class WorkProgressController extends Controller
             'work_id' => 'required',
             // 'estimated_completion_date' => 'required',
             'mb_stages' => 'required',
+            'work_status' => 'required',
             'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {
@@ -162,6 +163,7 @@ class WorkProgressController extends Controller
             'work_id' => 'required',
             // 'estimated_completion_date' => 'required',
             'mb_stages' => 'required',
+            'work_status' => 'required',
             'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {

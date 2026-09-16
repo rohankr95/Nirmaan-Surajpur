@@ -59,6 +59,7 @@ class TechnicalSanctionController extends Controller
             'work_id' => 'required',
             'ts_no' => 'required',
             'submission_date' => 'required',
+            'ts_amount' => 'required|numeric',
             'file'=>'required|mimes:jpeg,jpg,png,gif,pdf',
 
         ]);
@@ -118,6 +119,7 @@ class TechnicalSanctionController extends Controller
             'work_id' => 'required',
             'ts_no' => 'required',
             'submission_date' => 'required',
+            'ts_amount' => 'required|numeric',
             'file'=>'required|mimes:jpeg,jpg,png,gif,pdf',
 
         ]);
