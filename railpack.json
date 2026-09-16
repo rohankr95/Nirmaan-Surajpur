@@ -19,7 +19,8 @@
     "libjpeg-dev",
     "libfreetype6-dev",
     "libwebp-dev",
-    "libgd-dev"
+    "libgd-dev",
+    "zlib1g-dev"
   ],
   "phpExtensions": ["gd"]
 }
