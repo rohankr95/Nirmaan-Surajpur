@@ -62,7 +62,10 @@ class WorkController extends Controller
         $workType = WorkType::get();
         $vidhansabha = AssemblyConstituency::get();
         $work = Work::OrderBy('work_id','desc')->first();
-        $office = Office::where('office_id','!=',1)->get();
+        // Every office is a real agency, including the first one created — it
+        // was previously excluded here (but not from edit()), which also
+        // silently hid it from every agency-wise report.
+        $office = Office::get();
         $Employee = Employee::where('office_id',session()->get('office_id'))->get();
         $Adm_Employee = Employee::get();
         return view('work.form',compact('fy','dp','scheme','locationType','city','block','workType','vidhansabha','office','Employee','Adm_Employee'));

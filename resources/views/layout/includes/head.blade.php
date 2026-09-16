@@ -32,7 +32,7 @@
 <!-- dataTables css -->
 <link href="{{ asset('assets/plugins/datatables/dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
 <!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<link href="{{ asset('assets/vendor/select2/select2.min.css') }}" rel="stylesheet" />
 <!-- Theme style -->
 <link href="{{asset('assets/dist/css/styleBD.css')}}" rel="stylesheet" type="text/css"/>
 

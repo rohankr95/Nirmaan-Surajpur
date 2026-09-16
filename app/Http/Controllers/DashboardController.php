@@ -50,13 +50,14 @@ class DashboardController extends Controller
 
         $geo_pending = (clone $workBuilder)->whereNull('latitude')->count();
 
-        // Compliance: completed works still missing their certificates. Only
-        // completed works are counted, since the certificates are not due before.
-        $completed = (clone $workBuilder)->where('work_status', 10);
+        // Compliance: works still missing a certificate. Rejected and closed
+        // works are excluded — those will never receive one — but a work in
+        // progress can still be flagged, not only ones already complete.
+        $liveWorks = (clone $workBuilder)->whereNotIn('work_status', [11, 12]);
         $doc_pending = [
-            'uc'  => (clone $completed)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'uc'))->count(),
-            'cc'  => (clone $completed)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'cc'))->count(),
-            'rwh' => (clone $completed)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'rwh'))->count(),
+            'uc'  => (clone $liveWorks)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'uc'))->count(),
+            'cc'  => (clone $liveWorks)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'cc'))->count(),
+            'rwh' => (clone $liveWorks)->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', 'rwh'))->count(),
         ];
 
 
@@ -121,14 +122,9 @@ class DashboardController extends Controller
         }
 
         //Fetching Agency Data
-        $office_data = Office::where('office_id','!=',1)->get();
-        if(is_officer())
-        {
-            $workBuilder->where('office_id',session()->get('office_id'));
-        }
-        if(is_emp())
-        {
-            $workBuilder->where('employee_id',session()->get('emp_id'));
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
         foreach ($office_data as $office) {
             $workBuilder = Work::query();

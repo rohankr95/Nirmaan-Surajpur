@@ -19,11 +19,12 @@
             style="color: red">&nbsp;*</span></label>
     <div class="col-sm-9">
         <select name="CWorkStatus" id="CWorkStatus" class="form-control mb-20">
-            <option value="0">--वर्तमान स्थिति चुने--</option>
-            <option value="1">कार्य प्रगति पर</option>
-            <option value="2">कार्य पूर्ण</option>
-            <option value="3">कार्य बंद</option>
-            <option value="4">कार्य निरस्त</option>
+            <option value="0">--वर्तमान स्थिति चुनें--</option>
+            @foreach(get_work_statuses() as $status)
+                <option value="{{ $status->work_status_id }}" {{ echo_selected($work->work_status == $status->work_status_id) }}>
+                    {{ $status->work_status_name }}
+                </option>
+            @endforeach
         </select>
     </div>
 </div>

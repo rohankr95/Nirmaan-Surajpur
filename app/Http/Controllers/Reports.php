@@ -101,6 +101,46 @@ class Reports extends Controller
         return view('reports.works.work_detail',compact('work','activity'));
     }
     /**
+     * The actual works behind a dashboard pending-count card: which works
+     * still need a geo tag, or a UC/CC/RWH certificate.
+     */
+    public function pending_works(Request $request)
+    {
+        $type = $request->type;
+
+        $titles = [
+            'geo' => 'जियो टैग लंबित कार्य',
+            'uc'  => 'यूसी अपलोड लंबित कार्य',
+            'cc'  => 'सीसी अपलोड लंबित कार्य',
+            'rwh' => 'आर.डब्लू.एच अपलोड लंबित कार्य',
+        ];
+
+        if (! array_key_exists($type, $titles)) {
+            abort(404);
+        }
+
+        $builder = Work::query();
+        if (is_officer()) {
+            $builder->where('office_id', session()->get('office_id'));
+        }
+        if (is_emp()) {
+            $builder->where('employee_id', session()->get('emp_id'));
+        }
+
+        if ($type === 'geo') {
+            $builder->whereNull('latitude');
+        } else {
+            $builder->whereNotIn('work_status', [11, 12])
+                ->whereDoesntHave('documents', fn ($q) => $q->where('doc_type', $type));
+        }
+
+        $work_data = $builder->latest()->get();
+        $title = $titles[$type];
+
+        return view('reports.pending_works', compact('work_data', 'title', 'type'));
+    }
+
+    /**
      * Every geo-tagged work the caller may see, plotted on one map.
      */
     public function work_map(Request $request)
@@ -327,14 +367,10 @@ class Reports extends Controller
     public function agency_wise(Request $request)
     {
         //Fetching Agency Data
-        $office_data = Office::where('office_id','!=',1)->get();
-        if(is_officer())
-        {
-            $office_data->where('office_id',session()->get('office_id'));
-        }
-        if(is_emp())
-        {
-            $office_data->where('employee_id',session()->get('emp_id'));
+        // Every office is a real agency; there is no reserved id to exclude.
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
         foreach ($office_data as $office) {
             $workBuilder = Work::query();
@@ -494,14 +530,10 @@ class Reports extends Controller
     public function last_activity(Request $request)
     {
         //Fetching Agency Data
-        $office_data = Office::where('office_id','!=',1)->get();
-        if(is_officer())
-        {
-            $office_data->where('office_id',session()->get('office_id'));
-        }
-        if(is_emp())
-        {
-            $office_data->where('employee_id',session()->get('emp_id'));
+        // Every office is a real agency; there is no reserved id to exclude.
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
         foreach ($office_data as $office) {
             $workBuilder = Work::query();
@@ -534,10 +566,10 @@ class Reports extends Controller
     public function employee_agency_wise(Request $request)
     {
         //Fetching Agency Data
-        $office_data = Office::where('office_id','!=',1)->get();
-        if(is_officer())
-        {
-            $office_data->where('office_id',session()->get('office_id'));
+        // Every office is a real agency; there is no reserved id to exclude.
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
         foreach ($office_data as $office) {
             $workBuilder = Work::query();
@@ -599,16 +631,11 @@ class Reports extends Controller
     public function uploaded_docs(Request $request)
     {
         // Fetching Agency Data
-        $office_data = Office::where('office_id', '!=', 1)->get();
-    
-        if (is_officer()) {
-            $office_data->where('office_id', session()->get('office_id'));
+        // Every office is a real agency; there is no reserved id to exclude.
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
-    
-        if (is_emp()) {
-            $office_data->where('employee_id', session()->get('emp_id'));
-        }
-    
         foreach ($office_data as $office) {
             $totalCountBuilder = Work::where('office_id', $office->office_id);
     
@@ -646,14 +673,10 @@ class Reports extends Controller
     {
 
         //Fetching Agency Data
-        $office_data = Office::where('office_id','!=',1)->get();
-        if(is_officer())
-        {
-            $office_data->where('office_id',session()->get('office_id'));
-        }
-        if(is_emp())
-        {
-            $office_data->where('employee_id',session()->get('emp_id'));
+        // Every office is a real agency; there is no reserved id to exclude.
+        $office_data = Office::all();
+        if (is_officer() || is_emp()) {
+            $office_data = $office_data->where('office_id', session()->get('office_id'))->values();
         }
         foreach ($office_data as $office) {
             $workBuilder = Work::query();

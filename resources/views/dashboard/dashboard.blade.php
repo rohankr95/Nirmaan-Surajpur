@@ -86,17 +86,31 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row" style="margin-top:14px">
-                            <div class="col-xs-12">
-                                <a href="{{ route('reports.work-map') }}">
-                                    <span class="label {{ $geo_pending ? 'label-warning' : 'label-success' }}">
-                                        जियो टैग लंबित: {{ $geo_pending }}
-                                    </span>
-                                </a>
-                                <span class="label {{ $doc_pending['uc'] ? 'label-warning' : 'label-success' }}">यूसी अपलोड शेष: {{ $doc_pending['uc'] }}</span>
-                                <span class="label {{ $doc_pending['cc'] ? 'label-warning' : 'label-success' }}">सीसी अपलोड शेष: {{ $doc_pending['cc'] }}</span>
-                                <span class="label {{ $doc_pending['rwh'] ? 'label-warning' : 'label-success' }}">आर.डब्लू.एच अपलोड शेष: {{ $doc_pending['rwh'] }}</span>
-                            </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-bd">
+                    <div class="panel-heading"><div class="panel-title"><h4>लंबित कार्य</h4></div></div>
+                    <div class="panel-body">
+                        <div class="row">
+                            @php
+                                $pendingCards = [
+                                    ['type' => 'geo', 'count' => $geo_pending,      'label' => 'जियो टैग लंबित'],
+                                    ['type' => 'uc',  'count' => $doc_pending['uc'],  'label' => 'यूसी अपलोड लंबित'],
+                                    ['type' => 'cc',  'count' => $doc_pending['cc'],  'label' => 'सीसी अपलोड लंबित'],
+                                    ['type' => 'rwh', 'count' => $doc_pending['rwh'], 'label' => 'आर.डब्लू.एच अपलोड लंबित'],
+                                ];
+                            @endphp
+                            @foreach($pendingCards as $card)
+                                <div class="col-xs-6 col-md-3">
+                                    <a href="{{ route('reports.pending-works', ['type' => $card['type']]) }}">
+                                        <div class="statistic-box text-center panel {{ $card['count'] ? 'panel-warning' : 'panel-success' }}" style="padding:10px 0;margin:0">
+                                            <h3 class="m-0 {{ $card['count'] ? 'text-warning' : 'text-success' }}">{{ $card['count'] }}</h3>
+                                            <div class="small">{{ $card['label'] }}</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>

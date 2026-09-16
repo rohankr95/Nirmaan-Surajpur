@@ -282,7 +282,7 @@ check "rejected document not stored" "$BAD" "0"
 
 # The dashboard counts certificates outstanding on completed works only.
 curl -s -b "$JAR" -o "$TMP/dash4.html" "$BASE/dashboard"
-if grep -q "सीसी अपलोड शेष" "$TMP/dash4.html"; then ok "certificate pending counters on the dashboard"
+if grep -q "सीसी अपलोड लंबित" "$TMP/dash4.html"; then ok "certificate pending counters on the dashboard"
 else bad "certificate pending counters missing"; fi
 
 # --- geo-tagging and maps ------------------------------------------------
@@ -307,6 +307,72 @@ else bad "location map missing from work detail"; fi
 curl -s -b "$JAR" -o "$TMP/dash3.html" "$BASE/dashboard"
 if grep -q "जियो टैग लंबित" "$TMP/dash3.html"; then ok "geo-tag pending counter on the dashboard"
 else bad "geo-tag pending counter missing"; fi
+
+# The pending counters must react to real data, not sit at a fixed 0. A work
+# with no lat/long and no RWH document must show up in both counts.
+if grep -qE 'reports/pending-works\?type=geo' "$TMP/dash3.html"; then ok "geo card links to the pending-works list"
+else bad "geo card is not a link to the pending list"; fi
+if grep -qE 'reports/pending-works\?type=rwh' "$TMP/dash3.html"; then ok "RWH card links to the pending-works list"
+else bad "RWH card is not a link to the pending list"; fi
+
+RWH_BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM works WHERE work_id=$WORK_ID AND work_status NOT IN (11,12)
+   AND NOT EXISTS (SELECT 1 FROM work_documents d WHERE d.work_id=works.work_id AND d.doc_type='rwh')" 2>/dev/null)
+check "work counted as RWH-pending before any RWH upload" "$RWH_BEFORE" "1"
+
+# $WORK_ID was created with coordinates, so it can never test the geo-pending
+# list. A second, deliberately untagged work is needed for that check.
+UNTAGGED_NAME="स्मोक अनटैग्ड कार्य $RANDOM"
+TOKEN=$(csrf "$BASE/work/create")
+post_code "$BASE/work" -d "_token=$TOKEN" -d "work_name=$UNTAGGED_NAME" \
+  -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" -d "unit_work=1" > /dev/null
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/pendgeo.html" -w '%{http_code}' "$BASE/reports/pending-works?type=geo")
+check "geo pending-works list loads" "$CODE" "200"
+if grep -q "$UNTAGGED_NAME" "$TMP/pendgeo.html"; then ok "geo-untagged work appears in its pending list"
+else bad "geo-untagged work missing from pending list"; fi
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/pendrwh.html" -w '%{http_code}' "$BASE/reports/pending-works?type=rwh")
+check "rwh pending-works list loads" "$CODE" "200"
+if grep -q "स्मोक टेस्ट सीसी रोड" "$TMP/pendrwh.html"; then ok "RWH-pending work appears in its pending list"
+else bad "RWH-pending work missing from pending list"; fi
+
+# uc/cc were already uploaded to this work earlier in the run, so it must NOT
+# appear in the uc/cc pending lists — pending must reflect actual doc state.
+curl -s -b "$JAR" -o "$TMP/penduc.html" "$BASE/reports/pending-works?type=uc"
+if grep -q "स्मोक टेस्ट सीसी रोड" "$TMP/penduc.html"; then bad "work with a UC on file still listed as UC-pending"
+else ok "work with a UC on file is not listed as UC-pending"; fi
+
+# --- office 1 must not be silently excluded from agency reports ----------
+# Every agency-report method filtered out office_id=1 outright, and the admin
+# work-create dropdown excluded it too, so the first office ever created
+# (id=1 by auto-increment) was invisible in every agency-wise report and
+# could never be picked from the work form — total_works stuck at "-".
+FIRST_OFFICE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT MIN(office_id) FROM offices" 2>/dev/null)
+
+curl -s -b "$JAR" -o "$TMP/wcreate.html" "$BASE/work/create"
+if grep -q "value=\"$FIRST_OFFICE\"" "$TMP/wcreate.html"; then ok "office 1 selectable on the work-create form"
+else bad "office 1 missing from the work-create office dropdown"; fi
+
+OFFICE1_WORKS=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM works WHERE office_id=$FIRST_OFFICE" 2>/dev/null)
+curl -s -b "$JAR" -o "$TMP/agencywise.html" "$BASE/reports/agency-wise"
+CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/reports/agency-wise")
+check "agency-wise report loads" "$CODE" "200"
+if [ "$OFFICE1_WORKS" -gt 0 ]; then
+  if grep -qE ">$OFFICE1_WORKS<" "$TMP/agencywise.html" || grep -q ">$OFFICE1_WORKS</a>" "$TMP/agencywise.html"; then
+    ok "office 1's real work count is shown, not hidden as zero"
+  else
+    bad "office 1's work count not found in the agency-wise report"
+  fi
+fi
+
+# The same fix must hold for the other agency-scoped report endpoints.
+for path in "reports/agency-wise-30-days-pending" "reports/employee-agency-wise" "reports/counts-uploaded-docs" "reports/last-status"; do
+  CODE=$(curl -s -b "$JAR" -o "$TMP/rep.html" -w '%{http_code}' "$BASE/$path")
+  check "GET /$path" "$CODE" "200"
+done
 
 # --- contractor master and work order ------------------------------------
 CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/contractor")
@@ -501,6 +567,24 @@ if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "p
 else bad "progress photo not rendered"; fi
 if grep -qE 'images/Work-Complete/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "completion photo rendered in gallery"
 else bad "completion photo not rendered"; fi
+
+# --- work-progress status dropdown must list every real status -----------
+# CWorkStatus was 4 hardcoded options unrelated to work_statuses. It now
+# lists every row in the table, and only status 10/11/12 must reveal the
+# complete/closed/reject forms — everything else keeps the ongoing-progress
+# form visible.
+STATUS_COUNT=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_statuses" 2>/dev/null)
+curl -s -b "$JAR" -o "$TMP/wpstatus.html" "$BASE/work-progress/create?work_id=$WORK_ID&work_status=9"
+# +1 for the "--वर्तमान स्थिति चुनें--" placeholder option.
+RENDERED=$(awk '/id="CWorkStatus"/,/<\/select>/' "$TMP/wpstatus.html" | grep -c '<option value="[0-9]')
+check "status dropdown lists every work_statuses row" "$RENDERED" "$((STATUS_COUNT + 1))"
+
+if grep -q 'id="wpStagesForm"' "$TMP/wpstatus.html" && grep -q 'id="wpCompleteForm"' "$TMP/wpstatus.html" \
+   && grep -q 'id="wpClosedForm"' "$TMP/wpstatus.html" && grep -q 'id="wpRejectForm"' "$TMP/wpstatus.html"; then
+  ok "all four progress sub-forms present on the page"
+else
+  bad "one or more progress sub-forms missing from the page"
+fi
 
 # --- per-work audit trail ------------------------------------------------
 TRAIL=$(mysql -ularavel -plaravel nirmaan -N -e \

@@ -21,14 +21,14 @@
 <!-- dataTables js -->
 <script src="{{ asset('assets/plugins/datatables/dataTables.min.js') }}" type="text/javascript"></script>
 <!-- Select2 Js -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<script src="{{ asset('assets/vendor/select2/select2.min.js') }}"></script>
 <!-- End Core Plugins
 =====================================================================-->
 <!-- Start Theme label Script
 =====================================================================-->
 @if (request()->route()->getName() == 'dashboard')
     <!-- ChartJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.min.js"></script>
+    <script src="{{ asset('assets/vendor/chartjs/Chart.min.js') }}"></script>
 
     <script>
         new Chart(document.getElementById('myChart'), {
@@ -266,6 +266,11 @@
         $('#CWorkStatus').on('change', function() {
             ChangeCurrentWorkStatus(this.value);
         });
+        // Sync the visible sub-form with whatever status is already selected
+        // (e.g. the work's current status), not just on the next change.
+        if ($('#CWorkStatus').length) {
+            ChangeCurrentWorkStatus($('#CWorkStatus').val());
+        }
     });
     $(document).ready(function() {
         if ($("#NoTender").val() != 0) {
@@ -335,29 +340,33 @@
         }
     }
 
-    function ChangeCurrentWorkStatus(value = 1) {
+    // The dropdown now lists every status in work_statuses, not four fixed
+    // options, but only three of them switch to a dedicated form: complete
+    // (10), closed (11) and rejected (12). Anything else — every earlier
+    // stage of the work — falls through to the ongoing-progress form.
+    function ChangeCurrentWorkStatus(value) {
+        value = parseInt(value, 10);
 
-        if (value == 1) {
+        if (value === 10) {
+            $("#wpStagesForm").hide();
+            $("#wpClosedForm").hide();
+            $("#wpCompleteForm").show();
+            $("#wpRejectForm").hide();
+        } else if (value === 11) {
+            $("#wpStagesForm").hide();
+            $("#wpClosedForm").show();
+            $("#wpCompleteForm").hide();
+            $("#wpRejectForm").hide();
+        } else if (value === 12) {
+            $("#wpStagesForm").hide();
+            $("#wpClosedForm").hide();
+            $("#wpCompleteForm").hide();
+            $("#wpRejectForm").show();
+        } else {
             $("#wpStagesForm").show();
             $("#wpClosedForm").hide();
             $("#wpCompleteForm").hide();
             $("#wpRejectForm").hide();
-
-        } else if (value == 2) {
-            $("#wpClosedForm").hide();
-            $("#wpStagesForm").hide();
-            $("#wpCompleteForm").show();
-            $("#wpRejectForm").hide();
-        } else if (value == 3) {
-            $("#wpClosedForm").show();
-            $("#wpStagesForm").hide();
-            $("#wpCompleteForm").hide();
-            $("#wpRejectForm").hide();
-        } else {
-            $("#wpClosedForm").hide();
-            $("#wpStagesForm").hide();
-            $("#wpCompleteForm").hide();
-            $("#wpRejectForm").show();
         }
     }
 
