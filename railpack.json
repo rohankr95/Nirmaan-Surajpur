@@ -18,7 +18,8 @@
     "libpng-dev",
     "libjpeg-dev",
     "libfreetype6-dev",
-    "libwebp-dev"
+    "libwebp-dev",
+    "libgd-dev"
   ],
   "phpExtensions": ["gd"]
 }
