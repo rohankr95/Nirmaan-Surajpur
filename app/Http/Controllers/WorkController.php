@@ -148,6 +148,7 @@ class WorkController extends Controller
         $work->ward_id = $request->ward;
         $work->financial_year_id = $request->fy;
         $work->employee_id = $eng_id??0;
+        $work->sdo_emp_id = $request->sdo_emp_id;
         $work->work_status = 1; // 1 fo aprambh
         $work->created_by = session()->get('user_id');
         $work->dpr_startDate = $request->dpr_startDate;
@@ -244,6 +245,7 @@ class WorkController extends Controller
         $work->ward_id = $request->ward;
         $work->financial_year_id = $request->fy;
         $work->employee_id = $eng_id;
+        $work->sdo_emp_id = $request->sdo_emp_id;
         $work->updated_by = session()->get('user_id');
         $work->dpr_startDate = $request->dpr_startDate;
         $work->dpr_endDate = $request->dpr_endDate;

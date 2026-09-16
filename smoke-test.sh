@@ -55,7 +55,7 @@ CODE=$(post_code "$BASE/work" \
   -d "_token=$TOKEN" \
   -d "work_name=स्मोक टेस्ट सीसी रोड" \
   -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
-  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" -d "sdo_emp_id=2" \
   -d "unit_work=1" \
   -d "dpr_startDate=2026-04-01" -d "dpr_endDate=2026-04-30" \
   -d "workComplete_endDate=2027-03-31")
@@ -143,6 +143,26 @@ CODE=$(post_code "$BASE/work-progress" \
 check "undecodable image does not crash the save" "$CODE" "302"
 AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
 check "record still saved despite bad image" "$AFTER" "$((BEFORE + 1))"
+
+# --- engineer / SDO assignment and contacts ------------------------------
+SDO=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT sdo_emp_id FROM works WHERE work_id=$WORK_ID" 2>/dev/null)
+check "SDO recorded on the work" "$SDO" "2"
+
+curl -s -b "$JAR" -o "$TMP/detail.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "उत्तरदायी अधिकारी" "$TMP/detail.html"; then ok "responsible-officer panel renders"
+else bad "responsible-officer panel missing"; fi
+# emp_mobile has always been stored; it was never shown anywhere.
+if grep -q "9876543210" "$TMP/detail.html"; then ok "sub-engineer mobile shown"
+else bad "sub-engineer mobile not shown on work detail"; fi
+if grep -q "9876500011" "$TMP/detail.html"; then ok "SDO mobile shown"
+else bad "SDO mobile not shown on work detail"; fi
+
+# The admin create form must list employees; the options used to be wrapped in
+# an isset($work) guard, leaving the dropdown empty on create.
+curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
+if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
+else bad "admin create form has an empty employee dropdown"; fi
 
 # --- per-work audit trail ------------------------------------------------
 TRAIL=$(mysql -ularavel -plaravel nirmaan -N -e \

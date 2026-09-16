@@ -84,6 +84,42 @@
             </div>
 
             <div class="col-lg-3">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <div class="panel-title text-center">
+                            <h4>उत्तरदायी अधिकारी</h4>
+                        </div>
+                    </div>
+                    <div class="panel-body p-0">
+                        <table class="table table-condensed table-bordered m-0">
+                            <tbody>
+                                <tr>
+                                    <td colspan="2"><b>उप अभियंता</b></td>
+                                </tr>
+                                <tr>
+                                    <td>नाम</td>
+                                    <td>{{ $work->employee->emp_name ?? '—' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>मोबाइल न.</td>
+                                    <td>{{ $work->employee->emp_mobile ?? '—' }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><b>एसडीओ</b></td>
+                                </tr>
+                                <tr>
+                                    <td>नाम</td>
+                                    <td>{{ $work->sdo->emp_name ?? '—' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>मोबाइल न.</td>
+                                    <td>{{ $work->sdo->emp_mobile ?? '—' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <div class="panel-title text-center">

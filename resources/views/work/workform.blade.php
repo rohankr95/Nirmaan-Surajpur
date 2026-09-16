@@ -197,15 +197,13 @@
                     <div class="col-sm-3">
                         <label for="employeeAdmin" class="col-form-label">नियुक्त कर्मचारी</label>
                         <select name="employeeAdmin" id="employeeAdmin" class="form-control form-select">
-                            @if (isset($work))
                             <option value="">-- कर्मचारी चुनें --</option>
-                                @foreach ($Adm_Employee as $list)
-                                    <option value="{{ $list->emp_id }}"
-                                        {{ isset($work) ? ($work->employee_id == $list->emp_id ? 'selected' : '') : '' }}>
-                                        {{ $list->emp_name }}
-                                    </option>
-                                @endforeach
-                            @endif
+                            @foreach ($Adm_Employee as $list)
+                                <option value="{{ $list->emp_id }}"
+                                    {{ isset($work) ? ($work->employee_id == $list->emp_id ? 'selected' : '') : '' }}>
+                                    {{ $list->emp_name }}
+                                </option>
+                            @endforeach
                         </select>
 
                     </div>
@@ -228,6 +226,19 @@
                         @enderror
                     </div>
                 @endif
+
+                <div class="col-sm-3">
+                    <label for="sdo_emp_id" class="col-form-label">नियुक्त एसडीओ</label>
+                    <select name="sdo_emp_id" id="sdo_emp_id" class="form-control form-select">
+                        <option value="">-- एसडीओ चुनें --</option>
+                        @foreach ((is_admin() ? $Adm_Employee : $Employee) as $list)
+                            <option value="{{ $list->emp_id }}"
+                                {{ isset($work) ? ($work->sdo_emp_id == $list->emp_id ? 'selected' : '') : '' }}>
+                                {{ $list->emp_name }}{{ $list->designation?->designation_name ? ' — '.$list->designation->designation_name : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
             </div>
             {{-- <div class="form-group row">

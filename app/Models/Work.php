@@ -10,7 +10,7 @@ use PhpParser\Node\Expr\FuncCall;
 class Work extends Model
 {
     use HasFactory,SoftDeletes;
-    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','grampanchayat_id','block_id','ward_id','city_id','financial_year_id','employee_id'];
+    protected $fillable = ['work_name','units_of_work','work_type_id','scheme_id','office_id','department_id','location_type_id','village_id','ward_id','financial_year_id','employee_id','sdo_emp_id'];
     protected $primaryKey = 'work_id';
 
     public function work_type()
@@ -80,5 +80,9 @@ class Work extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class,'employee_id','emp_id');
+    }
+    public function sdo()
+    {
+        return $this->belongsTo(Employee::class,'sdo_emp_id','emp_id');
     }
 }
