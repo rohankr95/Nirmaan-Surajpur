@@ -136,9 +136,9 @@ DISTINCT=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(DISTINCT upload_file) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
 check "rapid uploads got distinct filenames" "$DISTINCT" "$TS_AFTER"
 
-# A file that claims to be an image but will not decode must not 500. Posted to
-# work-progress rather than a sanction: the sanctions carry a `mimes` rule that
-# rejects it before it ever reaches the upload path, so it would prove nothing.
+# A file that claims to be an image but is not one must be rejected cleanly —
+# not saved, and not a 500. Work progress accepted anything at all until the
+# mimes rule was added, which is how broken images reached the gallery.
 printf 'not really a png' > "$TMP/corrupt.png"
 BEFORE=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
 TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID")
@@ -146,9 +146,21 @@ CODE=$(post_code "$BASE/work-progress" \
   -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=2" -F "work_status=9" \
   -F "description=corrupt upload" \
   -F "file=@$TMP/corrupt.png;type=image/png")
-check "undecodable image does not crash the save" "$CODE" "302"
+check "non-image upload does not crash the request" "$CODE" "302"
 AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
-check "record still saved despite bad image" "$AFTER" "$((BEFORE + 1))"
+check "non-image upload is rejected, not stored" "$AFTER" "$BEFORE"
+
+# A genuine PDF is a legitimate progress attachment and must be accepted.
+printf '%%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%%%EOF\n' > "$TMP/doc.pdf"
+TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID")
+CODE=$(post_code "$BASE/work-progress" \
+  -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=2" -F "work_status=9" \
+  -F "description=pdf attachment" \
+  -F "file=@$TMP/doc.pdf;type=application/pdf")
+check "PDF attachment accepted" "$CODE" "302"
+WITHPDF=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_progress WHERE upload_file LIKE '%.pdf'" 2>/dev/null)
+if [ "$WITHPDF" -ge 1 ]; then ok "PDF stored on the progress entry"; else bad "PDF was not stored"; fi
 
 # --- village master CRUD -------------------------------------------------
 CODE=$(curl -s -b "$JAR" -o "$TMP/vlist.html" -w '%{http_code}' "$BASE/master/village")
@@ -207,6 +219,19 @@ else bad "SDO mobile not shown on work detail"; fi
 curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
+
+# --- stage-grouped photo gallery -----------------------------------------
+curl -s -b "$JAR" -o "$TMP/detail.html" "$BASE/reports/work-details/$WORK_ID"
+if grep -q "कार्य के छायाचित्र" "$TMP/detail.html"; then ok "photo gallery panel renders"
+else bad "photo gallery panel missing"; fi
+# The progress photo was uploaded against stage 1 (नींव कार्य), so the gallery
+# must group it under that stage rather than dumping it in a flat list.
+if grep -q "नींव कार्य" "$TMP/detail.html"; then ok "photos grouped under their stage"
+else bad "gallery did not group photos by stage"; fi
+if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "progress photo rendered in gallery"
+else bad "progress photo not rendered"; fi
+if grep -qE 'images/Work-Complete/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "completion photo rendered in gallery"
+else bad "completion photo not rendered"; fi
 
 # --- per-work audit trail ------------------------------------------------
 TRAIL=$(mysql -ularavel -plaravel nirmaan -N -e \

@@ -238,6 +238,10 @@
             @endif
 
             <div class="col-lg-12">
+                @include('reports.works._photo_gallery',['work'=>$work])
+            </div>
+
+            <div class="col-lg-12">
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         <div class="panel-title text-center">

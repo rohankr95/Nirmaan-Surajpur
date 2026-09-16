@@ -101,6 +101,7 @@ class WorkProgressController extends Controller
             'work_id' => 'required',
             // 'estimated_completion_date' => 'required',
             'mb_stages' => 'required',
+            'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -160,7 +161,8 @@ class WorkProgressController extends Controller
         $validator = Validator::make($request->all(), [
             'work_id' => 'required',
             // 'estimated_completion_date' => 'required',
-            'mb_stages' => 'required'
+            'mb_stages' => 'required',
+            'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
