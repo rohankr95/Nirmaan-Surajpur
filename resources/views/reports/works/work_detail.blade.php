@@ -32,12 +32,12 @@
                                         <table class="table table-condensed table-bordered m-0">
                                             <tbody>
                                             @if($work->ward_id)
-                                                <tr><td>नगर</td><td class="bg-success"><b>{{ $work->ward->city->city_name }}</b></td></tr>
-                                                <tr><td>वार्ड</td><td class="bg-success"><b>{{ $work->ward->ward_name }}</b></td></tr>
+                                                <tr><td>नगर</td><td class="bg-success"><b>{{ $work->ward?->city?->city_name ?? '—' }}</b></td></tr>
+                                                <tr><td>वार्ड</td><td class="bg-success"><b>{{ $work->ward?->ward_name ?? '—' }}</b></td></tr>
                                             @else
-                                                <tr><td>विकासखण्ड</td><td class="bg-success"><b>{{ $work->village->grampanchayat->block->block_name }}</b></td></tr>
-                                                <tr><td>ग्रामपंचायत</td><td class="bg-success"><b>{{ $work->village->grampanchayat->grampanchayat_name }}</b></td></tr>
-                                                <tr><td>ग्राम</td><td class="bg-success"><b>{{ $work->village->village_name }}</b></td></tr>
+                                                <tr><td>विकासखण्ड</td><td class="bg-success"><b>{{ $work->village?->grampanchayat?->block?->block_name ?? '—' }}</b></td></tr>
+                                                <tr><td>ग्रामपंचायत</td><td class="bg-success"><b>{{ $work->village?->grampanchayat?->grampanchayat_name ?? '—' }}</b></td></tr>
+                                                <tr><td>ग्राम</td><td class="bg-success"><b>{{ $work->village?->village_name ?? '—' }}</b></td></tr>
                                             @endif
                                             </tbody>
                                         </table>
@@ -45,7 +45,7 @@
                                 </tr>
                                 <tr>
                                     <td>कार्य प्रकार</td>
-                                    <th class="bg-success">{{ $work->work_type->work_type_name }}</th>
+                                    <th class="bg-success">{{ $work->work_type?->work_type_name ?? '—' }}</th>
                                 </tr>
                                 <tr>
                                     <td>कार्य यूनिट </td>
@@ -53,19 +53,19 @@
                                 </tr>
                                 <tr>
                                     <td>योजना का नाम</td>
-                                    <th class="bg-success">{{ $work->scheme->scheme_name }}</th>
+                                    <th class="bg-success">{{ $work->scheme?->scheme_name ?? '—' }}</th>
                                 </tr>
                                 <tr>
                                     <td>विभाग</td>
-                                    <th class="bg-success">{{ $work->department->department_name }}</th>
+                                    <th class="bg-success">{{ $work->department?->department_name ?? '—' }}</th>
                                 </tr>
                                 <tr>
                                     <td>वित्तीय वर्ष</td>
-                                    <th class="bg-success">{{ $work->financial_year->name }}</th>
+                                    <th class="bg-success">{{ $work->financial_year?->name ?? '—' }}</th>
                                 </tr>
                                 <tr>
                                     <td>एजेंसी</td>
-                                    <th class="bg-success">{{ $work->office->office_name }}</th>
+                                    <th class="bg-success">{{ $work->office?->office_name ?? '—' }}</th>
                                 </tr>
 {{--                                    <th>क्षेत्र</th>--}}
 {{--                                    <th>एजेंसी</th>--}}
@@ -127,7 +127,7 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                            <h3 class="text-center {{ ($work->work_status==9)?'text-success':'' }}{{ ($work->work_status==10)?'text-danger':'' }}">{{ $work->status->work_status_name }}</h3>
+                            <h3 class="text-center {{ ($work->work_status==9)?'text-success':'' }}{{ ($work->work_status==10)?'text-danger':'' }}">{{ $work->status?->work_status_name ?? '—' }}</h3>
                     </div>
                     <div class="panel-body p-0">
                         <table class="table table-condensed text-center table-bordered m-0">

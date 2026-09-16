@@ -15,11 +15,13 @@ class LogActivity
      * @param  string      $module   the kind of record, e.g. 'Work', 'TS'
      * @param  int|null    $id       the record's own id
      * @param  int|null    $workId   the work this belongs to, where there is one
+     * @param  string|null $details  human-readable specifics, e.g. an amount or a date
      */
-    public static function addToLog($subject, $module, $id = null, $workId = null)
+    public static function addToLog($subject, $module, $id = null, $workId = null, $details = null)
     {
     	$log = [];
     	$log['subject'] = $subject;
+    	$log['details'] = $details;
     	$log['subject_type'] = $module;
     	$log['subject_id'] = $id;
     	$log['work_id'] = $workId;

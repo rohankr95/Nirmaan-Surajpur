@@ -85,11 +85,11 @@
                 value="{{ isset($workProgress) ? $workProgress->expenditure_amount : '' }}">
         </div>
         <div class="col-sm-3">
-            <label for="file"
-                class="col-form-label">{{ isset($workProgress) ? 'Change Images/Bill' : 'दस्तावेज/बिल अपलोड करें' }}&nbsp;<span
+            <label for="files"
+                class="col-form-label">{{ isset($workProgress) ? 'Add More Images/Bill' : 'दस्तावेज/बिल अपलोड करें' }}&nbsp;<span
                 style="color: red">*</span>
-               (Image/Pdf)</label>
-            <input class="form-control" type="file" id="file" name="file" accept=".png, .jpg, .jpeg, .pdf" required/>
+               (Image/Pdf, एक से अधिक चुन सकते हैं)</label>
+            <input class="form-control" type="file" id="files" name="files[]" accept=".png, .jpg, .jpeg, .pdf" multiple {{ isset($workProgress) ? '' : 'required' }}/>
         </div>
     </div>
     <div class="form-group row">

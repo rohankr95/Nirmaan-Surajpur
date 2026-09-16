@@ -85,9 +85,11 @@ class Reports extends Controller
             $workBuilder->where('created_at', '<=', now()->subDays(30)->toDateTimeString());
         }
             
-        // $work_data = $workBuilder->select(['works.*','works.created_at as created_at','works.updated_at as updated_at'])->get();
-
-        $work_data = $workBuilder->latest()->get();
+        // village/grampanchayat/block/city/ward filters above left-join tables
+        // that carry their own created_at column, so an unqualified latest()
+        // ("order by created_at") is ambiguous and errors whenever a filter is
+        // active. Qualify both the select and the order column to works.*.
+        $work_data = $workBuilder->select('works.*')->orderBy('works.created_at', 'desc')->get();
 
         return view('reports.works.works',compact('request','work_data'));
     }

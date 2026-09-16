@@ -25,4 +25,8 @@ class WorkProgress extends Model
     {
         return $this->belongsTo(WorkStatus::class,'work_status_id','work_status_id');
     }
+    public function images()
+    {
+        return $this->hasMany(WorkProgressImage::class,'work_progress_id','wp_id');
+    }
 }

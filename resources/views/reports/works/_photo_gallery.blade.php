@@ -1,9 +1,22 @@
 @php
     // Progress photos are already stage-linked through work_progress.mb_stages_id;
     // they have simply never been presented as evidence of the work over time.
+    // A status update can carry several files (work_progress_images) on top of
+    // the older single upload_file column, so each entry is flattened into a
+    // {file, date} pair before grouping.
     $groups = $work->work_progress
-        ->filter(fn ($entry) => filled($entry->upload_file))
-        ->groupBy(fn ($entry) => $entry->workTypeStage->work_type_stage_name ?? 'अन्य चरण');
+        ->flatMap(function ($entry) {
+            $files = $entry->images->pluck('file_path');
+            if (filled($entry->upload_file)) {
+                $files->push($entry->upload_file);
+            }
+            return $files->unique()->map(fn ($file) => (object) [
+                'file' => $file,
+                'date' => $entry->status_update_date,
+                'stage' => $entry->workTypeStage->work_type_stage_name ?? 'अन्य चरण',
+            ]);
+        })
+        ->groupBy('stage');
 
     $completionFile = $work->work_complete->upload_file ?? null;
 @endphp
@@ -28,11 +41,11 @@
                             </div>
                             <div class="panel-body p-0">
                                 @foreach($entries as $entry)
-                                    @php $isImage = in_array(strtolower(pathinfo($entry->upload_file, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp','bmp']); @endphp
-                                    <a href="{{ asset($entry->upload_file) }}" target="_blank" title="{{ $entry->status_update_date }}">
+                                    @php $isImage = in_array(strtolower(pathinfo($entry->file, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp','bmp']); @endphp
+                                    <a href="{{ asset($entry->file) }}" target="_blank" title="{{ $entry->date }}">
                                         @if($isImage)
-                                            <img src="{{ asset($entry->upload_file) }}"
-                                                 alt="{{ $stageName }} — {{ $entry->status_update_date }}"
+                                            <img src="{{ asset($entry->file) }}"
+                                                 alt="{{ $stageName }} — {{ $entry->date }}"
                                                  style="width:100%;height:150px;object-fit:cover;margin-bottom:4px;">
                                         @else
                                             <div class="text-center" style="height:150px;line-height:150px;background:#eee;margin-bottom:4px;">
@@ -41,7 +54,7 @@
                                         @endif
                                     </a>
                                     <div class="text-center" style="font-size:12px;margin-bottom:8px;">
-                                        {{ $entry->status_update_date ? date('d-m-Y', strtotime($entry->status_update_date)) : '' }}
+                                        {{ $entry->date ? date('d-m-Y', strtotime($entry->date)) : '' }}
                                     </div>
                                 @endforeach
                             </div>

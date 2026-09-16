@@ -9,6 +9,7 @@ use App\Models\TechnicalSanction;
 use App\Models\Tender;
 use App\Models\Work;
 use App\Models\WorkProgress;
+use App\Models\WorkProgressImage;
 use App\Models\WorkStatus;
 use App\Models\WorkType;
 use App\Models\WorkTypeStage;
@@ -102,7 +103,8 @@ class WorkProgressController extends Controller
             // 'estimated_completion_date' => 'required',
             'mb_stages' => 'required',
             'work_status' => 'required',
-            'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
+            'files' => 'required|array|min:1',
+            'files.*' => 'mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -115,12 +117,29 @@ class WorkProgressController extends Controller
         $workProgress->mb_stages_id = $request->mb_stages;
         $workProgress->expenditure_amount = $request->expenditure_amount;
         $workProgress->status_update_date = date('Y-m-d');
-        $workProgress->upload_file = store_upload($request->file, 'Work-Progress') ?? $workProgress->upload_file;
         $workProgress->description = $request->description;
         $workProgress->save();
+        $this->storeProgressImages($workProgress, $request->file('files', []));
         $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>9, 'work_stage'=>$request->mb_stages]);
         LogActivity::addToLog('Saved Work Progress','Work Progress',$workProgress->wp_id,$request->work_id);
         return redirect()->back()->with('success', 'Work-Progres Added Successfully !');
+    }
+
+    /**
+     * A status update can carry several photos/bills at once; each becomes
+     * its own row so the detail-page gallery can show them all.
+     */
+    private function storeProgressImages(WorkProgress $workProgress, array $files)
+    {
+        foreach ($files as $file) {
+            $path = store_upload($file, 'Work-Progress');
+            if ($path) {
+                WorkProgressImage::create([
+                    'work_progress_id' => $workProgress->wp_id,
+                    'file_path' => $path,
+                ]);
+            }
+        }
     }
 
     /**
@@ -164,7 +183,8 @@ class WorkProgressController extends Controller
             // 'estimated_completion_date' => 'required',
             'mb_stages' => 'required',
             'work_status' => 'required',
-            'file' => 'nullable|mimes:jpeg,jpg,png,gif,webp,pdf',
+            'files' => 'nullable|array',
+            'files.*' => 'mimes:jpeg,jpg,png,gif,webp,pdf',
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -176,9 +196,9 @@ class WorkProgressController extends Controller
         $workProgress->mb_stages_id = $request->mb_stages;
         $workProgress->expenditure_amount = $request->expenditure_amount;
         $workProgress->status_update_date = $request->status_update_date;
-        $workProgress->upload_file = store_upload($request->file, 'Work-Progress') ?? $workProgress->upload_file;
         $workProgress->description = $request->description;
         $workProgress->save();
+        $this->storeProgressImages($workProgress, $request->file('files', []));
         LogActivity::addToLog('Update Work Progress','Work Progress',$workProgress->wp_id,$request->work_id);
         return redirect()->route('work-progress.index')->with('success', 'Work-Progress Updated Successfully !');
     }

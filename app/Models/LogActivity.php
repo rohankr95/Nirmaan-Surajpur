@@ -9,7 +9,7 @@ class LogActivity extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'subject', 'subject_type', 'subject_id', 'work_id',
+        'subject', 'details', 'subject_type', 'subject_id', 'work_id',
         'url', 'method', 'ip', 'agent', 'module', 'user_id'
     ];
 
@@ -42,7 +42,9 @@ class LogActivity extends Model
 
     public function getLabelAttribute()
     {
-        return self::LABELS[$this->subject] ?? $this->subject;
+        $label = self::LABELS[$this->subject] ?? $this->subject;
+
+        return $this->details ? $label . ' — ' . $this->details : $label;
     }
 
     public function scopeForWork($query, $workId)

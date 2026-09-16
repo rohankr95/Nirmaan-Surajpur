@@ -87,7 +87,9 @@ class PaymentController extends Controller
         $payment->created_by = session()->get('user_id');
         $payment->save();
 
-        LogActivity::addToLog('Saved Payment', 'Payment', $payment->payment_id, $work->work_id);
+        $details = $payment->type_label . ': ₹' . number_format($payment->amount, 2)
+            . ' (दिनांक ' . $payment->payment_date->format('d-m-Y') . ')';
+        LogActivity::addToLog('Saved Payment', 'Payment', $payment->payment_id, $work->work_id, $details);
 
         return back()->with('success', 'भुगतान दर्ज किया गया');
     }

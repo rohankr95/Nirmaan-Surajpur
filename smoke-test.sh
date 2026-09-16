@@ -77,12 +77,14 @@ CODE=$(post_code "$BASE/work-progress" \
   -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=1" -F "work_status=9" \
   -F "expenditure_amount=50000" -F "description=स्मोक टेस्ट प्रगति" \
   -F "estimated_completion_date=2027-01-31" \
-  -F "file=@$TMP/photo.png;type=image/png")
-check "add work progress with photo" "$CODE" "302"
+  -F "files[]=@$TMP/photo.png;type=image/png" -F "files[]=@$TMP/photo.png;type=image/png")
+check "add work progress with multiple photos" "$CODE" "302"
 
+WP_ID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT wp_id FROM work_progress WHERE work_id=$WORK_ID ORDER BY wp_id DESC LIMIT 1" 2>/dev/null)
 WP=$(mysql -ularavel -plaravel nirmaan -N -e \
-  "SELECT COUNT(*) FROM work_progress WHERE work_id=$WORK_ID AND upload_file IS NOT NULL" 2>/dev/null)
-check "progress photo stored in upload_file" "$WP" "1"
+  "SELECT COUNT(*) FROM work_progress_images WHERE work_progress_id=$WP_ID" 2>/dev/null)
+check "both progress photos stored" "$WP" "2"
 
 # --- work completion, previously impossible on a fresh DB ----------------
 TOKEN=$(csrf "$BASE/work")
@@ -146,7 +148,7 @@ TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID")
 CODE=$(post_code "$BASE/work-progress" \
   -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=2" -F "work_status=9" \
   -F "description=corrupt upload" \
-  -F "file=@$TMP/corrupt.png;type=image/png")
+  -F "files[]=@$TMP/corrupt.png;type=image/png")
 check "non-image upload does not crash the request" "$CODE" "302"
 AFTER=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT COUNT(*) FROM work_progress" 2>/dev/null)
 check "non-image upload is rejected, not stored" "$AFTER" "$BEFORE"
@@ -157,10 +159,10 @@ TOKEN=$(csrf "$BASE/work-progress/create?work_id=$WORK_ID")
 CODE=$(post_code "$BASE/work-progress" \
   -F "_token=$TOKEN" -F "work_id=$WORK_ID" -F "mb_stages=2" -F "work_status=9" \
   -F "description=pdf attachment" \
-  -F "file=@$TMP/doc.pdf;type=application/pdf")
+  -F "files[]=@$TMP/doc.pdf;type=application/pdf")
 check "PDF attachment accepted" "$CODE" "302"
 WITHPDF=$(mysql -ularavel -plaravel nirmaan -N -e \
-  "SELECT COUNT(*) FROM work_progress WHERE upload_file LIKE '%.pdf'" 2>/dev/null)
+  "SELECT COUNT(*) FROM work_progress_images WHERE file_path LIKE '%.pdf'" 2>/dev/null)
 if [ "$WITHPDF" -ge 1 ]; then ok "PDF stored on the progress entry"; else bad "PDF was not stored"; fi
 
 # --- village master CRUD -------------------------------------------------
