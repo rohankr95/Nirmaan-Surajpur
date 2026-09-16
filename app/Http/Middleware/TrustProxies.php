@@ -10,9 +10,15 @@ class TrustProxies extends Middleware
     /**
      * The trusted proxies for this application.
      *
+     * Cloud hosts (Railway, Heroku, Render, ...) terminate TLS at an edge
+     * proxy with an IP that isn't fixed or known in advance, so we trust
+     * all proxies and rely on the X-Forwarded-* headers they set to know
+     * the original request was HTTPS -- otherwise asset()/url() generate
+     * http:// links that browsers block as mixed content on an https:// page.
+     *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.
