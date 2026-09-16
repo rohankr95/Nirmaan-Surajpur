@@ -54,6 +54,7 @@ Route::middleware([IsLoggedIn::class])->group(function () {
         Route::resource("wards",Master\WardController::class);
 
         Route::resource("schemes",Master\SchemeController::class);
+        Route::resource("work_category",Master\WorkCategoryController::class);
         Route::resource("work_types",Master\WorkTypeController::class);
         Route::resource("departments",Master\DepartmentController::class);
         Route::resource("offices",Master\OfficeController::class);
@@ -126,6 +127,7 @@ Route::middleware([IsLoggedIn::class])->group(function () {
         Route::get("ward-wise",[Reports::class,'ward_wise'])->name('reports.ward-wise');
         Route::get("agency-wise",[Reports::class,'agency_wise'])->name('reports.agency-wise');
         Route::get("scheme-wise",[Reports::class,'scheme_wise'])->name('reports.scheme-wise');
+        Route::get("category-wise",[Reports::class,'category_wise'])->name('reports.category-wise');
         Route::get("scheme-wise-work-list",[Reports::class,'scheme_wise_work'])->name('reports.scheme-wise-work-list');
         Route::get("logs-list",[Reports::class,'logs_list'])->name('reports.logs-list');
         Route::post("logs-index",[Reports::class,'logs_filter'])->name('reports.logs_filter');

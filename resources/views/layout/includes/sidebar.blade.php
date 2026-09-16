@@ -64,6 +64,7 @@
                     <li class="{{ echo_active(request()->route()->getName()=="reports.counts-uploaded-docs") }}"><a href="{{ route("reports.counts-uploaded-docs") }}">एजेंसीवार दस्तावेज़ों की संख्या रिपोर्ट  </a></li>
                     <li class="{{ echo_active(request()->route()->getName()=="reports.agency-wise-30-days-pending") }}"><a href="{{ route("reports.agency-wise-30-days-pending") }}">एजेंसीवार 30 दिन-लंबित रिपोर्ट </a></li>
                     <li class="{{ echo_active(request()->route()->getName()=="reports.scheme-wise") }}"><a href="{{ route("reports.scheme-wise") }}">योजनावार रिपोर्ट</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=="reports.category-wise") }}"><a href="{{ route("reports.category-wise") }}">कार्य श्रेणीवार रिपोर्ट</a></li>
                     @if(is_admin())
                     <li class="{{ echo_active(request()->route()->getName()=="reports.logs-list") }}"><a href="{{ route("reports.logs-list") }}">लॉगिन स्थिति रिपोर्ट</a></li>
                     <li class="{{ echo_active(request()->route()->getName()=="reports.last-status") }}"><a href="{{ route("reports.last-status") }}">कार्य की अंतिम स्थिति रिपोर्ट</a></li>
@@ -110,6 +111,8 @@
                     @if(is_admin())
                     <li class="{{ echo_active(request()->route()->getName()=="offices.index") }}"><a href="{{ route("offices.index") }}">कार्यालय</a></li>
                     @endif
+
+                    <li class="{{ echo_active(request()->route()->getName()=="work_category.index") }}"><a href="{{ route("work_category.index") }}">कार्य श्रेणी</a></li>
 
                     <li class="{{ echo_active(request()->route()->getName()=="work_types.index") }}"><a href="{{ route("work_types.index") }}">कार्य प्रकार और चरण</a></li>
 

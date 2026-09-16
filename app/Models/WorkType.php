@@ -15,4 +15,8 @@ class WorkType extends Model
     {
         return $this->hasMany(WorkTypeStage::class,'work_type_id','work_type_id');
     }
+    public function category()
+    {
+        return $this->belongsTo(WorkCategory::class,'work_category_id','work_category_id');
+    }
 }

@@ -12,6 +12,10 @@ function get_grampanchayats()
 {
     return \App\Models\Grampanchayat::orderBy('grampanchayat_name')->get();
 }
+function get_work_categories()
+{
+    return \App\Models\WorkCategory::orderBy('work_category_name')->get();
+}
 function get_contractors()
 {
     return \App\Models\Contractor::where('status', 1)->orderBy('contractor_name')->get();

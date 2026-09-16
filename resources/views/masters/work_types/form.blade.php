@@ -12,6 +12,23 @@
         </div>
     </div>
 
+    <div class="row form-group">
+        <div class="col-sm-4">
+            <span class="pull-right">कार्य श्रेणी :</span>
+        </div>
+        <div class="col-sm-8">
+            <select name="work_category_id" class="form-control form-select">
+                <option value="">-- कार्य श्रेणी चुनें --</option>
+                @foreach(get_work_categories() as $category)
+                    <option value="{{ $category->work_category_id }}"
+                        {{ echo_selected($category->work_category_id == (isset($workType) ? $workType->work_category_id : '')) }}>
+                        {{ $category->work_category_name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
 <div class="row form-group">
     <table class="table table-bordered p-0 m-0">
         <thead>

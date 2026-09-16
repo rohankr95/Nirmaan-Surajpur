@@ -51,6 +51,7 @@ class WorkTypeController extends Controller
 
         $workType = new WorkType();
         $workType->work_type_name = $request->name;
+        $workType->work_category_id = $request->work_category_id ?: null;
         $workType->save();
         $workTypeID = $workType->work_type_id;
 
@@ -114,6 +115,7 @@ class WorkTypeController extends Controller
             return back()->withErrors($validator)->withInput();
         }
         $workType->work_type_name = $request->name;
+        $workType->work_category_id = $request->work_category_id ?: null;
         foreach ($workType->work_stages as $ws)
         {
             if(!in_array($ws->work_type_stage_id, $request->work_stage_id))

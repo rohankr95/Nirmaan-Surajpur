@@ -108,9 +108,13 @@ class DatabaseSeeder extends Seeder
             ['scheme_id' => 1, 'scheme_name' => 'डी.एम.एफ.',              'department_id' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['scheme_id' => 2, 'scheme_name' => 'मुख्यमंत्री ग्राम सड़क योजना', 'department_id' => 2, 'created_at' => $now, 'updated_at' => $now],
         ]);
+        DB::table('work_categories')->insert([
+            ['work_category_id' => 1, 'work_category_name' => 'सड़क एवं पुल',   'created_at' => $now, 'updated_at' => $now],
+            ['work_category_id' => 2, 'work_category_name' => 'पेयजल आपूर्ति', 'created_at' => $now, 'updated_at' => $now],
+        ]);
         DB::table('work_types')->insert([
-            ['work_type_id' => 1, 'work_type_name' => 'सीसी रोड निर्माण',   'created_at' => $now, 'updated_at' => $now],
-            ['work_type_id' => 2, 'work_type_name' => 'पेयजल पाईप लाइन',   'created_at' => $now, 'updated_at' => $now],
+            ['work_type_id' => 1, 'work_type_name' => 'सीसी रोड निर्माण', 'work_category_id' => 1, 'created_at' => $now, 'updated_at' => $now],
+            ['work_type_id' => 2, 'work_type_name' => 'पेयजल पाईप लाइन', 'work_category_id' => 2, 'created_at' => $now, 'updated_at' => $now],
         ]);
         DB::table('work_type_stages')->insert([
             ['work_type_stage_id' => 1, 'work_type_stage_name' => 'नींव कार्य',       'stage_number' => 1, 'work_type_id' => 1, 'created_at' => $now, 'updated_at' => $now],

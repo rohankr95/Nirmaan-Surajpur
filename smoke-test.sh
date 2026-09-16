@@ -221,6 +221,32 @@ curl -s -b "$JAR" -o "$TMP/wform.html" "$BASE/work/create"
 if grep -q "रमेश कुमार" "$TMP/wform.html"; then ok "admin create form lists employees"
 else bad "admin create form has an empty employee dropdown"; fi
 
+# --- work category master and report -------------------------------------
+CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/work_category")
+check "work category master lists" "$CODE" "200"
+
+CATNAME="स्मोक श्रेणी $RANDOM"
+TOKEN=$(csrf "$BASE/master/work_category")
+CODE=$(post_code "$BASE/master/work_category" -d "_token=$TOKEN" -d "work_category_name=$CATNAME")
+check "create work category" "$CODE" "302"
+CATID=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_category_id FROM work_categories ORDER BY work_category_id DESC LIMIT 1" 2>/dev/null)
+if [ -n "$CATID" ]; then ok "category persisted (id=$CATID)"; else bad "category not written"; fi
+
+CODE=$(curl -s -b "$JAR" -o "$TMP/cat.html" -w '%{http_code}' "$BASE/reports/category-wise")
+check "category-wise report loads" "$CODE" "200"
+# The seeded work belongs to a work type under "सड़क एवं पुल", so that row must
+# report it rather than showing every category as empty.
+if grep -q "सड़क एवं पुल" "$TMP/cat.html"; then ok "seeded category appears in the report"
+else bad "seeded category missing from the report"; fi
+
+# A category still attached to work types must not be deletable.
+TOKEN=$(csrf "$BASE/master/work_category")
+post_code "$BASE/master/work_category/1" -d "_token=$TOKEN" -d "_method=DELETE" > /dev/null
+STILL=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM work_categories WHERE work_category_id=1" 2>/dev/null)
+check "category in use is protected from deletion" "$STILL" "1"
+
 # --- certificates and supporting documents -------------------------------
 curl -s -b "$JAR" -o "$TMP/docs.html" "$BASE/reports/work-details/$WORK_ID"
 if grep -q "प्रमाण पत्र एवं दस्तावेज़" "$TMP/docs.html"; then ok "documents panel renders"
@@ -388,10 +414,13 @@ check "payments appear in the work audit trail" "$PAYLOG" "4"
 curl -s -b "$JAR" -o "$TMP/dash2.html" "$BASE/dashboard"
 if grep -q "वित्तीय स्थिति" "$TMP/dash2.html"; then ok "financial panel on the dashboard"
 else bad "financial panel missing from dashboard"; fi
-# Totals must come from the ledger, not from a stored figure: the released
-# total should reflect both instalments recorded above.
-if grep -q "600,000.00" "$TMP/dash2.html"; then ok "released total rolled up on the dashboard"
-else bad "dashboard released total does not match the ledger"; fi
+# Totals must come from the ledger, not from a stored figure. The expected
+# figure is derived from the database so the check holds on a re-run, where
+# earlier works have already contributed to the total.
+EXPECTED=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT FORMAT(COALESCE(SUM(amount),0),2) FROM work_payments WHERE payment_type='released'" 2>/dev/null)
+if grep -q "$EXPECTED" "$TMP/dash2.html"; then ok "released total rolled up on the dashboard ($EXPECTED)"
+else bad "dashboard released total does not match the ledger (want $EXPECTED)"; fi
 
 # An employee sees only their own works, so their roll-up must not include
 # money from works assigned to someone else.

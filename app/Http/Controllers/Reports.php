@@ -16,6 +16,7 @@ use App\Models\Village;
 use App\Models\Ward;
 use App\Models\Work;
 use App\Models\WorkStatus;
+use App\Models\WorkCategory;
 use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -351,6 +352,38 @@ class Reports extends Controller
         }
         return view('reports.agency_wise.agency_wise',compact('request','office_data'));
     }
+    /**
+     * Works grouped by the category their work type belongs to.
+     */
+    public function category_wise(Request $request)
+    {
+        $category_data = WorkCategory::withCount('work_types')->orderBy('work_category_name')->get();
+
+        foreach ($category_data as $category) {
+            $typeIds = $category->work_types->pluck('work_type_id');
+
+            $workBuilder = Work::query()->whereIn('work_type_id', $typeIds);
+            if (is_officer()) {
+                $workBuilder->where('office_id', session()->get('office_id'));
+            }
+            if (is_emp()) {
+                $workBuilder->where('employee_id', session()->get('emp_id'));
+            }
+
+            $category->total_works = (clone $workBuilder)->count();
+            $category->sanctioned = (float) (clone $workBuilder)->sum('sanction_amount');
+
+            $temp_data = [];
+            foreach (get_work_statuses() as $status) {
+                $temp_data[$status->work_status_id] = (clone $workBuilder)
+                    ->where('work_status', $status->work_status_id)->count();
+            }
+            $category->work_stage_data = $temp_data;
+        }
+
+        return view('reports.category_wise.category_wise', compact('request', 'category_data'));
+    }
+
     public function scheme_wise(Request $request)
     {
         //Fetching Agency Data
