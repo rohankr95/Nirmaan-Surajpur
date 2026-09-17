@@ -34,6 +34,7 @@
                 </a>
                 <ul class="treeview-menu">
                     <li class="{{ echo_active(request()->route()->getName()=='work.index') }}"><a href="{{ route('work.index') }}">समस्त कार्य</a></li>
+                    <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==1) }}"><a href="{{ route('reports.works') }}?status=1">कार्य अप्रारंभ</a></li>
                     <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==9) }}"><a href="{{ route('reports.works') }}?status=9">कार्य प्रगति</a></li>
                     <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==10) }}"><a href="{{ route('reports.works') }}?status=10">कार्य पूर्ण</a></li>
                     <li class="{{ echo_active(request()->route()->getName()=='reports.works' && request()->query('status')==11) }}"><a href="{{ route('reports.works') }}?status=11">कार्य बंद</a></li>

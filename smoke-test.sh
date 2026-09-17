@@ -68,6 +68,12 @@ if [ -n "$WORK_ID" ]; then ok "work persisted (id=$WORK_ID)"; else bad "work was
 CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/work")
 check "work list loads" "$CODE" "200"
 
+# --- कार्य अप्रारंभ sidebar link (a fresh work starts at status 1) --------
+CODE=$(curl -s -b "$JAR" -o "$TMP/notstarted.html" -w '%{http_code}' "$BASE/reports/works?status=1")
+check "कार्य अप्रारंभ filter loads" "$CODE" "200"
+if grep -q "work-details/$WORK_ID" "$TMP/notstarted.html"; then ok "freshly created work appears under कार्य अप्रारंभ"
+else bad "freshly created work missing from कार्य अप्रारंभ"; fi
+
 # --- a real upload, to catch column mismatches ---------------------------
 # Must be a genuinely decodable image: the upload path runs it through GD.
 php -r '$im=imagecreatetruecolor(120,90);imagefill($im,0,0,imagecolorallocate($im,30,90,140));imagepng($im,$argv[1]);' "$TMP/photo.png"
