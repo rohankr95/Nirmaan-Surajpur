@@ -219,12 +219,27 @@
         });
     });
 
+    // Bootstrap's own .table-responsive class (already loaded) gives a table
+    // horizontal scroll on small screens, but almost none of this app's ~60
+    // tables are wrapped in it. Rather than edit every view, wrap any bare
+    // <table> at runtime -- both on first load and every time a modal loads
+    // one via AJAX, since that content arrives after the page is ready.
+    function makeTablesResponsive(scope) {
+        $('table', scope || document).each(function () {
+            var $table = $(this);
+            if (!$table.closest('.table-responsive').length) {
+                $table.wrap('<div class="table-responsive"></div>');
+            }
+        });
+    }
+
     function openAddModal(title, link) {
         $.ajax({
             url: link,
             success: function(result) {
                 $('#add-modal #modal-title').text(title);
                 $('#add-modal #modal-body').html(result);
+                makeTablesResponsive('#add-modal #modal-body');
                 $('#add-modal').modal('show');
             },
         });
@@ -236,6 +251,7 @@
             success: function(result) {
                 $('#edit-modal #modal-title').text(title);
                 $('#edit-modal #modal-body').html(result);
+                makeTablesResponsive('#edit-modal #modal-body');
                 $('#edit-modal').modal('show');
             },
         });
@@ -247,6 +263,7 @@
             success: function(result) {
                 $('#delete-modal #modal-title').text(title);
                 $('#delete-modal #modal-body').html(result);
+                makeTablesResponsive('#delete-modal #modal-body');
                 $('#delete-modal').modal('show');
             },
         });
@@ -583,5 +600,11 @@
         });
     }
 
+    // Runs last (registered after every other ready() block above, including
+    // the DataTables initializations), so it wraps tables in their final,
+    // fully-rendered form.
+    $(document).ready(function () {
+        makeTablesResponsive();
+    });
 
 </script>
