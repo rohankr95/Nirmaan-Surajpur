@@ -135,15 +135,10 @@ class TechnicalSanctionController extends Controller
         $technicalSanction->upload_file = store_upload($request->file, 'Ts') ?? $technicalSanction->upload_file;
         $technicalSanction->remark = $request->remark;
         $technicalSanction->save();
-        $value = Work::where('work_id',$request->work_id)->first('tenderChecked');
-        if($value->tenderChecked == 1)
-        {   
-            $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>7,'ts_id'=>$technicalSanction->ts_id]);
-        }
-        else
-        {
-            $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'ts_id'=>$technicalSanction->ts_id]);
-        }
+        // tenderChecked only concerns whether the tender/work-order stage
+        // applies -- it has no bearing on Technical Sanction, and Technical
+        // Sanction approval must never skip past Administrative Sanction.
+        $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>$request->work_status,'ts_id'=>$technicalSanction->ts_id]);
         LogActivity::addToLog('Updated TS','TS',$technicalSanction->ts_id,$request->work_id);
         return redirect()->route('technical-sanction.index')->with('success', 'TS Added Successfully !');
     }

@@ -238,6 +238,72 @@ DISTINCT=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(DISTINCT upload_file) FROM technical_sanctions WHERE upload_file IS NOT NULL" 2>/dev/null)
 check "rapid uploads got distinct filenames" "$DISTINCT" "$TS_AFTER"
 
+# --- editing TS/AS must never fast-forward work_status without real approval ---
+# tenderChecked=1 works skip the tender stage once AS is genuinely approved,
+# but editing TS or AS for any other reason (fixing a typo, swapping a file)
+# must not silently jump the work forward -- and TS approval must never skip
+# past AS entirely.
+TOKEN=$(csrf "$BASE/work/create")
+post_code "$BASE/work" \
+  -d "_token=$TOKEN" -d "work_name=स्मोक TS-अनुमोदन परीक्षण" \
+  -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" \
+  -d "unit_work=1" > /dev/null
+TS_BUG_WORK=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_id FROM works ORDER BY work_id DESC LIMIT 1" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET tenderChecked=1, work_status=2 WHERE work_id=$TS_BUG_WORK" 2>/dev/null
+mysql -ularavel -plaravel nirmaan -e \
+  "INSERT INTO technical_sanctions (ts_no, submission_date, ts_amount, approval_date, work_id, created_at, updated_at) \
+   VALUES ('TS-SMOKE-BUG', '2026-08-01', 100000, NULL, $TS_BUG_WORK, NOW(), NOW())" 2>/dev/null
+TS_BUG_ID=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT ts_id FROM technical_sanctions WHERE work_id=$TS_BUG_WORK" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET ts_id=$TS_BUG_ID WHERE work_id=$TS_BUG_WORK" 2>/dev/null
+
+TOKEN=$(csrf "$BASE/technical-sanction/$TS_BUG_WORK/edit")
+post_code "$BASE/technical-sanction/$TS_BUG_ID" \
+  -F "_token=$TOKEN" -F "_method=PUT" -F "work_id=$TS_BUG_WORK" -F "work_status=2" \
+  -F "ts_no=TS-SMOKE-BUG-EDITED" -F "submission_date=2026-08-01" -F "ts_amount=100000" \
+  -F "file=@$TMP/photo.png;type=image/png" > /dev/null
+AFTER_TS_EDIT=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_status FROM works WHERE work_id=$TS_BUG_WORK" 2>/dev/null)
+check "editing an unapproved TS does not skip past AS" "$AFTER_TS_EDIT" "2"
+AS_STILL_UNSET=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT as_id IS NULL FROM works WHERE work_id=$TS_BUG_WORK" 2>/dev/null)
+check "AS was never touched by the TS edit" "$AS_STILL_UNSET" "1"
+
+# Same scenario for AS itself: create a tenderChecked=1 work with an
+# unapproved AS, edit it without setting approval_date, confirm no jump.
+TOKEN=$(csrf "$BASE/work/create")
+post_code "$BASE/work" \
+  -d "_token=$TOKEN" -d "work_name=स्मोक AS-अनुमोदन परीक्षण" \
+  -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" \
+  -d "unit_work=1" > /dev/null
+AS_BUG_WORK=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_id FROM works ORDER BY work_id DESC LIMIT 1" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET tenderChecked=1, work_status=4 WHERE work_id=$AS_BUG_WORK" 2>/dev/null
+mysql -ularavel -plaravel nirmaan -e \
+  "INSERT INTO administrative_sanctions (govt_or_district, as_no, submission_date, as_amount, approval_date, work_id, created_at, updated_at) \
+   VALUES ('District', 'AS-SMOKE-BUG', '2026-08-01', 500000, NULL, $AS_BUG_WORK, NOW(), NOW())" 2>/dev/null
+AS_BUG_ID=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT as_id FROM administrative_sanctions WHERE work_id=$AS_BUG_WORK" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e "UPDATE works SET as_id=$AS_BUG_ID WHERE work_id=$AS_BUG_WORK" 2>/dev/null
+
+TOKEN=$(csrf "$BASE/administrative-sanction/$AS_BUG_WORK/edit")
+post_code "$BASE/administrative-sanction/$AS_BUG_ID" \
+  -F "_token=$TOKEN" -F "_method=PUT" -F "work_id=$AS_BUG_WORK" -F "work_status=4" -F "as_by=District" \
+  -F "as_no=AS-SMOKE-BUG-EDITED" -F "as_submission_Date=2026-08-01" -F "as_amount=500000" > /dev/null
+AFTER_AS_EDIT=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_status FROM works WHERE work_id=$AS_BUG_WORK" 2>/dev/null)
+check "editing an unapproved AS does not jump to कार्य आदेश जारी" "$AFTER_AS_EDIT" "4"
+
+# Genuinely approving it (approval_date set) must now advance the work —
+# straight to कार्य प्रारंभ (8) for a tenderChecked=1 work with no tender stage.
+TOKEN=$(csrf "$BASE/administrative-sanction/$AS_BUG_WORK/edit")
+post_code "$BASE/administrative-sanction/$AS_BUG_ID" \
+  -F "_token=$TOKEN" -F "_method=PUT" -F "work_id=$AS_BUG_WORK" -F "work_status=4" -F "as_by=District" \
+  -F "as_no=AS-SMOKE-BUG-APPROVED" -F "as_submission_Date=2026-08-01" -F "as_amount=500000" \
+  -F "as_approval_date=2026-09-17" > /dev/null
+AFTER_AS_APPROVAL=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT work_status FROM works WHERE work_id=$AS_BUG_WORK" 2>/dev/null)
+check "genuinely approved AS advances a tender-skipped work to कार्य प्रारंभ" "$AFTER_AS_APPROVAL" "8"
+
 # A file that claims to be an image but is not one must be rejected cleanly —
 # not saved, and not a 500. Work progress accepted anything at all until the
 # mimes rule was added, which is how broken images reached the gallery.

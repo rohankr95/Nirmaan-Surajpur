@@ -139,9 +139,15 @@ class AdministrativeSanctionController extends Controller
         $administrativeSanction->remark = $request->remark;
         $administrativeSanction->save();
         $value = Work::where('work_id',$request->work_id)->first('tenderChecked');
-        if($value->tenderChecked == 1)
+        // A tenderChecked=1 work has no tender/work-order stage to go
+        // through, so once AS is genuinely approved it can move straight to
+        // "work started". But this same update() runs for the पेंसिल-icon
+        // edit path too, where approval_date is optional -- fixing a typo
+        // or swapping the file must not silently advance the work's status
+        // just because tenderChecked happens to be set.
+        if($value->tenderChecked == 1 && $administrativeSanction->approval_date)
         {
-            $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>7,'as_id'=>$administrativeSanction->as_id]);
+            $work  = Work::where('work_id',$request->work_id)->update(['work_status'=>8,'as_id'=>$administrativeSanction->as_id]);
         }
         else
         {
