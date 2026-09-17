@@ -78,6 +78,10 @@ class Reports extends Controller
         {
             $workBuilder->where('office_id',$request->agency_30days);
             $workBuilder->where('created_at', '<=', now()->subDays(30)->toDateTimeString());
+            // Match agency_wise_30days_pending(): completed/closed/rejected
+            // works aren't "pending", so the click-through total must agree
+            // with the count shown on the report.
+            $workBuilder->whereNotIn('work_status', [10, 11, 12]);
         }
         if($request->status_30days)
         {
@@ -684,7 +688,9 @@ class Reports extends Controller
             $workBuilder = Work::query();
             $workBuilder->where('office_id', $office->office_id);
             $workBuilder->where('created_at', '<=', now()->subDays(30)->toDateTimeString());
-            // $workBuilder->where('created_at', '>=', now()->subDays(30));
+            // Completed/closed/rejected works are done; an old one finished
+            // long ago isn't "pending" just because it's old.
+            $workBuilder->whereNotIn('work_status', [10, 11, 12]);
             $totalCountBuilder = $workBuilder;
             $office->total_works = $totalCountBuilder->count();
             $temp_data = array();

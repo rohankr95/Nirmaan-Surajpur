@@ -475,6 +475,48 @@ for path in "reports/agency-wise-30-days-pending" "reports/employee-agency-wise"
   check "GET /$path" "$CODE" "200"
 done
 
+# --- एजेंसीवार 30 दिन लंबित: completed/closed/rejected must not count -----
+# A work older than 30 days but already finished is not "pending"; one still
+# genuinely in progress and just as old must still be counted.
+TOKEN=$(csrf "$BASE/work/create")
+post_code "$BASE/work" \
+  -d "_token=$TOKEN" -d "work_name=स्मोक 30-दिन पूर्ण" \
+  -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" \
+  -d "unit_work=1" > /dev/null
+OLD_COMPLETE_ID=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_id FROM works ORDER BY work_id DESC LIMIT 1" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e \
+  "UPDATE works SET created_at=DATE_SUB(NOW(), INTERVAL 40 DAY), work_status=10 WHERE work_id=$OLD_COMPLETE_ID" 2>/dev/null
+
+TOKEN=$(csrf "$BASE/work/create")
+post_code "$BASE/work" \
+  -d "_token=$TOKEN" -d "work_name=स्मोक 30-दिन प्रगति" \
+  -d "fy=2" -d "scheme=1" -d "work_type=1" -d "location_type=1" \
+  -d "village=1" -d "dp=1" -d "office=1" -d "employeeAdmin=1" \
+  -d "unit_work=1" > /dev/null
+OLD_PENDING_ID=$(mysql -ularavel -plaravel nirmaan -N -e "SELECT work_id FROM works ORDER BY work_id DESC LIMIT 1" 2>/dev/null)
+mysql -ularavel -plaravel nirmaan -e \
+  "UPDATE works SET created_at=DATE_SUB(NOW(), INTERVAL 40 DAY), work_status=9 WHERE work_id=$OLD_PENDING_ID" 2>/dev/null
+
+EXPECTED_30DAY_TOTAL=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM works WHERE office_id=1 AND created_at <= DATE_SUB(NOW(), INTERVAL 30 DAY) AND work_status NOT IN (10,11,12)" 2>/dev/null)
+
+curl -s -b "$JAR" "$BASE/reports/agency-wise-30-days-pending" -o "$TMP/pending30.html"
+RENDERED_30DAY_TOTAL=$(grep -oP "agency_30days=1\">\K[0-9]+" "$TMP/pending30.html" | head -1)
+check "30-day pending total excludes completed/closed/rejected" "$RENDERED_30DAY_TOTAL" "$EXPECTED_30DAY_TOTAL"
+
+curl -s -b "$JAR" "$BASE/reports/works?agency_30days=1" -o "$TMP/pending30list.html"
+if grep -q "work-details/$OLD_COMPLETE_ID" "$TMP/pending30list.html"; then
+  bad "a completed work still shows in the 30-day pending click-through"
+else
+  ok "completed work excluded from the 30-day pending click-through"
+fi
+if grep -q "work-details/$OLD_PENDING_ID" "$TMP/pending30list.html"; then
+  ok "a genuinely old in-progress work still shows in the 30-day pending click-through"
+else
+  bad "an old in-progress work is missing from the 30-day pending click-through"
+fi
+
 # --- contractor master and work order ------------------------------------
 CODE=$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/master/contractor")
 check "contractor master lists" "$CODE" "200"
