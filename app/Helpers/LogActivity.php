@@ -30,7 +30,9 @@ class LogActivity
     	$log['ip'] = Request::ip();
     	$log['agent'] = Request::header('user-agent');
     	$log['module'] = $module;
-    	$log['user_id'] = session()->get('user_id');
+    	// Session carries the web login; a token (mobile/API) request has no
+    	// session, so fall back to whichever user the request authenticated as.
+    	$log['user_id'] = session()->get('user_id') ?? \request()->user()?->user_id;
     	LogActivityModel::create($log);
     }
 

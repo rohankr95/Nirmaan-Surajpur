@@ -897,6 +897,44 @@ SHARED=$(mysql -ularavel -plaravel nirmaan -N -e \
   "SELECT COUNT(*) - COUNT(DISTINCT password) FROM users WHERE login_id IN ('$EMAIL','$EMAIL2')" 2>/dev/null)
 check "provisioned logins have distinct passwords" "$SHARED" "0"
 
+# --- mobile API (Sanctum token auth, separate from the web session) -----
+LOGIN_JSON=$(curl -s -X POST "$BASE/api/login" -H "Accept: application/json" \
+  -d "login_id=admin" -d "password=admin123")
+API_TOKEN=$(printf '%s' "$LOGIN_JSON" | php -r '$d=json_decode(file_get_contents("php://stdin"),true); echo $d["token"]??"";')
+if [ -n "$API_TOKEN" ]; then ok "mobile API login issues a token"; else bad "mobile API login did not return a token"; fi
+
+CODE=$(curl -s -o "$TMP/api_me.html" -w '%{http_code}' "$BASE/api/me" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+check "mobile API /me authenticates with the token" "$CODE" "200"
+
+CODE=$(curl -s -o "$TMP/api_dash.html" -w '%{http_code}' "$BASE/api/dashboard" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+check "mobile API dashboard loads" "$CODE" "200"
+
+CODE=$(curl -s -o "$TMP/api_work.html" -w '%{http_code}' "$BASE/api/works/$WORK_ID" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+check "mobile API work detail loads" "$CODE" "200"
+
+STAGES_JSON=$(curl -s "$BASE/api/works/$WORK_ID/stages" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+STAGE_ID=$(printf '%s' "$STAGES_JSON" | php -r '$d=json_decode(file_get_contents("php://stdin"),true); echo $d["stages"][0]["work_type_stage_id"]??"";')
+if [ -n "$STAGE_ID" ]; then ok "mobile API stage list returns stages for the work's type"
+else bad "mobile API stage list returned no stages"; fi
+
+printf 'GIF89a' > "$TMP/mobile_photo.gif"
+CODE=$(curl -s -o "$TMP/api_progress.html" -w '%{http_code}' -X POST "$BASE/api/works/$WORK_ID/progress" \
+  -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json" \
+  -F "mb_stages=$STAGE_ID" -F "expenditure_amount=1000" -F "description=मोबाइल स्मोक टेस्ट" \
+  -F "latitude=22.1" -F "longitude=83.2" -F "files[]=@$TMP/mobile_photo.gif;type=image/gif")
+check "mobile API progress submission (200)" "$CODE" "200"
+
+MOBILE_LOG=$(mysql -ularavel -plaravel nirmaan -N -e \
+  "SELECT COUNT(*) FROM log_activities WHERE work_id=$WORK_ID AND subject LIKE '%(Mobile)%' AND user_id IS NOT NULL" 2>/dev/null)
+if [ "$MOBILE_LOG" -ge 1 ]; then ok "mobile API actions are attributed to the token's user in the audit trail"
+else bad "mobile API audit entries are missing a user_id"; fi
+
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/logout" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+check "mobile API logout (200)" "$CODE" "200"
+
+CODE=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/me" -H "Authorization: Bearer $API_TOKEN" -H "Accept: application/json")
+check "revoked mobile API token is rejected" "$CODE" "401"
+
 rm -rf "$JAR" "$TMP"
 echo
 echo "=== $PASS passed, $FAIL failed ==="

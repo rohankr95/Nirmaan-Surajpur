@@ -55,6 +55,9 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
+        // Needed for 'auth:sanctum' on the mobile API routes -- the web app's
+        // own session login uses the 'login' alias below and is untouched.
+        'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
         'alreadyLoggedIn' => \App\Http\Middleware\alreadyLoggedIn::class,
         'isLoggedIn' => \App\Http\Middleware\AuthCheck::class,
         'login' => \App\Http\Middleware\Authenticate::class,
