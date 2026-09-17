@@ -1,9 +1,14 @@
 /node_modules
 /public/hot
 /public/storage
-# Runtime uploads land under public/images/<folder> (see store_upload() in
-# app/Helpers/function_helper.php) and should never be committed, but the
-# theme's own static assets under public/images/res/ are real source files.
+# Runtime uploads land under public/uploads/<folder> (see store_upload() in
+# app/Helpers/function_helper.php) and should never be committed -- this is
+# also the exact directory a host's persistent volume should be mounted at.
+/public/uploads
+
+# public/images/res/ holds the theme's static assets and is committed; older
+# code paths wrote runtime uploads under public/images/* too, so that stays
+# ignored in case anything still lands there.
 /public/images/*
 !/public/images/res/
 /storage/*.key

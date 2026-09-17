@@ -712,16 +712,16 @@ else bad "photo gallery panel missing"; fi
 # must group it under that stage rather than dumping it in a flat list.
 if grep -q "नींव कार्य" "$TMP/detail.html"; then ok "photos grouped under their stage"
 else bad "gallery did not group photos by stage"; fi
-if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "progress photo rendered in gallery"
+if grep -qE 'uploads/Work-Progress/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "progress photo rendered in gallery"
 else bad "progress photo not rendered"; fi
-if grep -qE 'images/Work-Complete/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "completion photo rendered in gallery"
+if grep -qE 'uploads/Work-Complete/[a-f0-9]+\.png' "$TMP/detail.html"; then ok "completion photo rendered in gallery"
 else bad "completion photo not rendered"; fi
 
 # The printable dossier builds its own photo list straight from work_progress
 # and must also pick up work_progress_images entries, not just the legacy
 # single upload_file column.
 curl -s -b "$JAR" -o "$TMP/dossier_photos.html" "$BASE/reports/work-dossier/$WORK_ID"
-if grep -qE 'images/Work-Progress/[a-f0-9]+\.png' "$TMP/dossier_photos.html"; then ok "progress photo rendered on the dossier"
+if grep -qE 'uploads/Work-Progress/[a-f0-9]+\.png' "$TMP/dossier_photos.html"; then ok "progress photo rendered on the dossier"
 else bad "progress photo missing from the dossier"; fi
 
 # --- work-progress status dropdown must list every real status -----------
