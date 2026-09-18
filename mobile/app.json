@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "निर्माण सूरजपुर",
+    "slug": "nirmaan-surajpur",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "nirmaansurajpur",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.gov.jashpur.nirmaan",
+      "infoPlist": {
+        "NSCameraUsageDescription": "कार्य प्रगति की फोटो लेने के लिए कैमरे की अनुमति आवश्यक है।",
+        "NSLocationWhenInUseUsageDescription": "कार्य स्थल की जियो-टैगिंग हेतु लोकेशन की अनुमति आवश्यक है।",
+        "NSPhotoLibraryUsageDescription": "गैलरी से फोटो चुनने के लिए अनुमति आवश्यक है।"
+      }
+    },
+    "android": {
+      "package": "in.gov.jashpur.nirmaan",
+      "adaptiveIcon": {
+        "backgroundColor": "#0d3b66",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "कार्य प्रगति की फोटो लेने के लिए कैमरे की अनुमति आवश्यक है।"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "कार्य स्थल की जियो-टैगिंग हेतु लोकेशन की अनुमति आवश्यक है।"
+        }
+      ]
+    ]
+  }
+}
