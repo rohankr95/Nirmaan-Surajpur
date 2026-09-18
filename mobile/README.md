@@ -83,17 +83,27 @@ To get an installable Android build, from a machine with internet access to
 Google's Android SDK servers:
 
 - **Easiest — no Android Studio needed:** [EAS Build](https://docs.expo.dev/build/introduction/)
-  (Expo's free-tier cloud build service):
+  (Expo's free-tier cloud build service). This repo is a monorepo — the
+  Laravel app lives at the repo root and this Expo app lives under
+  `mobile/` — so **every `eas`/`npm` command below must be run from inside
+  this `mobile/` directory, not the repo root.** Running `eas build` from
+  the repo root is the #1 cause of a build failing with `Unable to resolve
+  module ../../App` (EAS then treats the whole repo, not `mobile/`, as the
+  project root and never finds `App.tsx`).
   ```sh
+  cd mobile              # required — not the repo root
   npm install -g eas-cli
   eas login
-  eas build:configure
   eas build --platform android --profile preview
   ```
+  `eas.json` is already committed here with `development`/`preview`
+  (`.apk`, easy to sideload for testing) and `production` (`.aab`, for Play
+  Store) profiles, so `eas build:configure` isn't needed — `eas build` will
+  prompt to link the project to your Expo account on its first run.
   This produces a downloadable `.apk` without installing any Android
   tooling locally.
 - **Local build:** install Android Studio (which includes the Android SDK),
-  then `npx expo run:android` from this directory.
+  then `cd mobile && npx expo run:android`.
 
 iOS needs a Mac either way (Xcode, or `eas build --platform ios` from a Mac
 with an Apple Developer account for signing).
